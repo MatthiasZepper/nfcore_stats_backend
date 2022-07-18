@@ -1,0 +1,15 @@
+FROM python:3.8-slim
+
+ENV PYTHONUNBUFFERED 1
+
+RUN apt-get update && apt-get install -y gcc python3-dev libpq-dev
+RUN pip install poetry
+
+COPY poetry.lock ./poetry.lock
+COPY pyproject.toml ./pyproject.toml
+
+RUN poetry config virtualenvs.create false && poetry install --no-dev
+
+COPY . /backend
+
+ENTRYPOINT [ "/backend/entrypoint.sh" ]

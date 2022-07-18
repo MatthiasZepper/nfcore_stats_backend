@@ -1,0 +1,46 @@
+version: "3"
+
+volumes:
+  nfcore_stats_data: {}
+
+services:
+  nfcore_redis:
+    image: "redis:latest"
+    ports:
+      - "6379:6379"
+
+  nfcore_stats_db:
+    image: "questdb/questdb:latest"
+    volumes:
+      - nfcore_stats_data:/root/.questdb/db
+    ports:
+      - "9000:9000"
+      - "8812:8812"
+
+  nfcore_stats_api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    depends_on:
+      - nfcore_stats_scheduler
+      - nfcore_stats_db
+    restart: always
+    volumes:
+      - ./backend:/backend
+    env_file:
+      - ./backend/.env
+    ports:
+      - 8000:8000
+    command: /backend/api/start_api.sh
+
+  nfcore_stats_scheduler:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    depends_on:
+      - nfcore_redis
+    volumes:
+      - ./backend:/backend
+    env_file:
+      - ./backend/.env
+    command: /backend/scheduler/start_scheduler.sh
