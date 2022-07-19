@@ -2,10 +2,10 @@ from datetime import datetime
 
 import requests
 
-from backend.scheduler.celery import celery_app
-from backend.api.db import engine
-from backend.api.models import Signal
-from backend.api.settings import settings
+from .celery import celery_app
+from .db import engine
+from .models import Signal
+from .settings import settings
 
 
 @celery_app.task

@@ -5,9 +5,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-from backend.api.db import engine
-from backend.api.models import Signal
-from backend.api.settings import settings
+from .db import engine
+from .models import Signal
+from .settings import settings
 
 
 class SignalResponse(BaseModel):

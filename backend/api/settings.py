@@ -3,13 +3,13 @@ from pydantic import BaseSettings
 
 class Settings(BaseSettings):
     """
-    TODO: Application settings ...
+    Application settings ...
     """
 
     debug: bool = False
-    celery_broker: str = "redis://localhost:6379/0"
+    celery_broker: str = "redis://nfcore_stats_redis:6379/0"
     frequency: int = 1  # default monitoring frequency
-    database_url: str = "postgresql://admin:quest@questdb:8812/qdb"
+    database_url: str = "postgresql://admin:quest@nfcore_stats_db:8812/qdb"
     database_pool_size: int = 3
     website_url: str = "https://nf-co.re"
 

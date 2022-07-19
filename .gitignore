@@ -65,8 +65,7 @@ env.bak/
 venv.bak/
 virtualenv/
 
-# Editors
-.vscode/
+# Editors/
 .idea/
 
 # Celery

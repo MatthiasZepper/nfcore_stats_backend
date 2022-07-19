@@ -40,12 +40,12 @@ clean-test: ## remove test and coverage artifacts
 	.pytest_cache
 
 format: ## run formatters on the package
-	isort --apply -rc app tests
-	black app tests
+	isort --apply -rc api tests
+	black api tests
 
 lint: ## run linters against the package
-	mypy app
-	pylint app
+	mypy api
+	pylint api
 
 test-unit: ## run unit tests and generate coverage
 	coverage run -m pytest -m "not integration" -vv
