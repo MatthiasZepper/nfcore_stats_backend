@@ -9,6 +9,7 @@ from pydantic import (
     validator
 )
 from typing import Union
+from urllib.parse import quote_plus
 
 class AppSettings(BaseSettings):
     """
@@ -17,20 +18,68 @@ class AppSettings(BaseSettings):
     for a good tutorial on dealing with secrets and .env variables
     """
 
-    project_path: Path = Path(__file__).parent.resolve()
-    project_name: str = PROJECT_PATH.name
+    """ Project metadata """
 
-    celery_broker: RedisDsn = Field(default='redis://nfcore_stats_redis:6379/0', env='REDIS_URL')
+    project_path: Path = Path(__file__).parent.resolve()
+    project_name: str = project_path.name
+
+
+    """ Celery settings """
+
+    celery_broker: RedisDsn
+    
+    @property #use below defined RedisDSN as Celery broker.
+    def celery_broker(self) -> RedisDsn:
+        return self.redis_dsn
+
     frequency: int = 1  # default monitoring frequency
-    database_url: PostgresDsn = Field(default='postgresql://admin:quest@nfcore_stats_db:8812/qdb', env='DATABASE_URL')
-    database_pool_size: int = 3
     website_url: str = "https://nf-co.re"
+
+
+
+    """ Quest database settings """
+
+    database_scheme: str = 'postgresql'
+    database_host: str = Field(default='nfcore_stats_db', env='DATABASE_HOST')
+    database_port: int = Field(default=8812, env='DATABASE_PORT')
+    database_username: str = Field(default='admin', env='QDB_PG_USER')
+    database_password: str = Field(default='quest', env='QDB_PG_PASSWORD')
+    database_suffix: str = 'qdb'
+    database_url: PostgresDsn
+    database_salt: bytes = None
+    database_pool_size: int = 3
+
+    @property
+    def database_url(self) -> PostgresDsn:
+        return PostgresDsn(f"{self.database_scheme}://"
+                        f"{quote_plus(self.database_username)}:{quote_plus(self.database_password)}@"
+                        f"{quote_plus(self.database_host)}:{self.database_port}/"
+                        f"{quote_plus(self.database_suffix)}", scheme=self.database_scheme, 
+                        host=f"{quote_plus(self.database_host)}")
+
+
+    """ Redis settings """
+
+    redis_scheme: str = Field(default='redis', env='REDIS_SCHEME')
+    redis_host: str = Field(default='nfcore_stats_redis', env='REDIS_HOST')
+    redis_port: int = Field(default=6379, env='REDIS_PORT') 
+    redis_db: int = Field(default=0, env='REDIS_DB')
+    redis_password: str = None
+    redis_socket_timeout: str = None
+
+    @property
+    def redis_dsn(self) -> RedisDsn:
+        return RedisDsn(f"{self.redis_scheme}://"
+                        f"{quote_plus(self.redis_host)}:{self.redis_port}/"
+                        f"{self.redis_db}", scheme=self.redis_scheme,
+                        host=f"{quote_plus(self.redis_host)}")
+
 
     class Config:
         """
         Meta configuration of the settings parser.
         """
-        # Use a prefix for the settings.
+        # Use a prefix for the settings
         env_prefix = ""
     
         @validator("database_url")
@@ -41,6 +90,7 @@ class AppSettings(BaseSettings):
             if url.startswith("postgres://"):
                 url = url.replace("postgres://", "postgresql://", 1)
             return url
+
 
 class DevAppSettings(AppSettings):
     """
