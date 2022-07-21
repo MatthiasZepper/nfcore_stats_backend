@@ -1,3 +1,9 @@
+"""
+Celery Beat, the built-in periodic task scheduler implementation of Celery is used for the periodic scrapes.
+Import Celery for creating tasks, and crontab for constructing Unix-like crontabs.
+"""
+
+
 from celery import Celery
 from celery.schedules import crontab
 
@@ -5,7 +11,7 @@ from .main import settings
 
 celery_app = Celery("tasks", broker=settings.celery_broker)
 
-MONITORING_TASK = "app.tasks.monitor"
+MONITORING_TASK = "mnt.backend.api.tasks.monitor"
 
 celery_app.conf.task_routes = {MONITORING_TASK: "main-queue"}
 

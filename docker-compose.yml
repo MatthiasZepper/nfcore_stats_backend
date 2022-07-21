@@ -18,6 +18,8 @@ services:
     ports:
       - "127.0.0.1:9000:9000"
       - "127.0.0.1:8812:8812"
+    env_file:
+      - .env
 
   nfcore_stats_api:
     container_name: nfcore_stats_api
@@ -31,7 +33,7 @@ services:
     volumes:
       - ./backend:/mnt/backend
     env_file:
-      - ./backend/.env
+      - .env
     ports:
       - "127.0.0.1:8000:8000"
     command: /mnt/backend/run/start_api.sh
@@ -46,5 +48,5 @@ services:
     volumes:
       - ./backend:/mnt/backend
     env_file:
-      - ./backend/.env
+      - .env
     command: /mnt/backend/run/start_scheduler.sh
