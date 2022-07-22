@@ -14,6 +14,7 @@ psycopg2 = "^2.8.6"
 pydantic = "^1.7.3"
 requests = "^2.25.1"
 uvicorn = "^0.13.0"
+sqlmodel = "^0.0.6"
 
 [tool.poetry.dev-dependencies]
 black = "^20.8b1"
