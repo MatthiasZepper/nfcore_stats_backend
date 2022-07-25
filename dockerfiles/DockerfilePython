@@ -4,8 +4,8 @@ ENV PYTHONUNBUFFERED 1
 WORKDIR /mnt/backend
 ENV PYTHONPATH /mnt/backend
 
-COPY poetry.lock /mnt/backend/poetry.lock
-COPY pyproject.toml /mnt/backend/pyproject.toml
+COPY ./backend/poetry.lock /mnt/backend/poetry.lock
+COPY ./backend/pyproject.toml /mnt/backend/pyproject.toml
 
 RUN apt-get update && apt-get install -y gcc python3-dev libpq-dev
 RUN pip install poetry

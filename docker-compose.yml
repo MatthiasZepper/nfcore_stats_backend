@@ -6,7 +6,9 @@ volumes:
 services:
   nfcore_stats_redis:
     container_name: nfcore_stats_redis
-    image: "redis:latest"
+    build:
+      context: .
+      dockerfile: ./dockerfiles/DockerfileRedis
     ports:
       - "127.0.0.1:6379:6379"
     networks:
@@ -23,13 +25,13 @@ services:
     networks:
       - nfcore_stats
     env_file:
-      - .env
+      - ./config/.env
 
   nfcore_stats_api:
     container_name: nfcore_stats_api
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./dockerfiles/DockerfilePython
     depends_on:
       - nfcore_stats_scheduler
       - nfcore_stats_db
@@ -38,7 +40,7 @@ services:
     volumes:
       - ./backend:/mnt/backend
     env_file:
-      - .env
+      - ./config/.env
     ports:
       - "127.0.0.1:8000:8000"
     networks:
@@ -48,8 +50,8 @@ services:
   nfcore_stats_scheduler:
     container_name: nfcore_stats_scheduler
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./dockerfiles/DockerfilePython
     depends_on:
       - nfcore_stats_redis
     networks:
@@ -57,7 +59,7 @@ services:
     volumes:
       - ./backend:/mnt/backend
     env_file:
-      - .env
+      - ./config/.env
     command: /mnt/backend/run/start_scheduler.sh
 networks:
   nfcore_stats:

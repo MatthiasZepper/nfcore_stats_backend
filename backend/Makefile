@@ -41,7 +41,7 @@ clean-test: ## remove test and coverage artifacts
 
 format: ## run formatters on the package
 	isort --apply -rc api tests
-	black api tests
+	black api 
 
 lint: ## run linters against the package
 	mypy api

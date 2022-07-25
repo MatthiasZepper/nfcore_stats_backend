@@ -64,15 +64,22 @@ class AppSettings(BaseSettings):
     redis_host: str = Field(default='nfcore_stats_redis', env='REDIS_HOST')
     redis_port: int = Field(default=6379, env='REDIS_PORT') 
     redis_db: int = Field(default=0, env='REDIS_DB')
-    redis_password: str = None
+    redis_password: str = Field(None, env='REDIS_PASSWORD')
     redis_socket_timeout: str = None
 
     @property
     def redis_dsn(self) -> RedisDsn:
-        return RedisDsn(f"{self.redis_scheme}://"
-                        f"{quote_plus(self.redis_host)}:{self.redis_port}/"
-                        f"{self.redis_db}", scheme=self.redis_scheme,
-                        host=f"{quote_plus(self.redis_host)}")
+        if self.redis_password:
+            return RedisDsn(f"{self.redis_scheme}://"
+                            f":{quote_plus(self.redis_password)}@"
+                            f"{quote_plus(self.redis_host)}:{self.redis_port}/"
+                            f"{self.redis_db}", scheme=self.redis_scheme,
+                            host=f"{quote_plus(self.redis_host)}")
+        else: #anonymous login to Redis (default, as direct exposure of Redis to untrusted entities is discouraged)
+            return RedisDsn(f"{self.redis_scheme}://"
+                            f"{quote_plus(self.redis_host)}:{self.redis_port}/"
+                            f"{self.redis_db}", scheme=self.redis_scheme,
+                            host=f"{quote_plus(self.redis_host)}")
 
 
     class Config:
