@@ -66,9 +66,7 @@ class AppSettings(BaseSettings):
         return RedisDsn(
             f"{self.redis_scheme}://"
             # anonymous login to Redis (default, as direct exposure of Redis to untrusted entities is discouraged)
-            f":{quote_plus(self.redis_password)}@"
-            if self.redis_password
-            else ""
+            f":{quote_plus(self.redis_password) if self.redis_password else ''}@"
             f"{quote_plus(self.redis_host)}:{self.redis_port}/"
             f"{self.redis_db}",
             scheme=self.redis_scheme,

@@ -1,6 +1,5 @@
 from sqlmodel import create_engine, SQLModel
 
-from .models import Signal
 from .settings import settings
 
 engine = create_engine(

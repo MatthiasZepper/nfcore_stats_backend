@@ -1,4 +1,5 @@
 from datetime import datetime
+from sqlmodel import Session
 
 import requests
 
@@ -20,28 +21,26 @@ def monitor():
 
     try:
         response = requests.head(settings.website_url)
-    except Exception as exc:
-        query = f"""
-            INSERT INTO signals(received,url,http_status,available)
-            VALUES(systimestamp(), '{settings.website_url}', -1, False);
-            """
 
-        with engine.connect() as conn:
-            conn.execute(query)
-
-        raise exc
-
-    signal = Signal(
+        signal = Signal(
         url=settings.website_url,
         http_status=response.status_code,
         received=datetime.now(),
         available=response.status_code >= 200 and response.status_code < 400,
-    )
+        )
+    
+    except Exception as exc:
 
-    query = f"""
-    INSERT INTO signals(received,url,http_status,available)
-    VALUES(systimestamp(), '{signal.url}', {signal.http_status}, {signal.available});
-    """
+        signal = Signal(
+        url=settings.website_url,
+        http_status= -1,
+        received=datetime.now(),
+        available=False,
+        )
 
-    with engine.connect() as conn:
-        conn.execute(query)
+        raise exc
+
+    finally:
+        with Session(engine) as session:
+            session.add(signal)
+            session.commit()
