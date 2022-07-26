@@ -23,19 +23,19 @@ def monitor():
         response = requests.head(settings.website_url)
 
         signal = Signal(
-        url=settings.website_url,
-        http_status=response.status_code,
-        received=datetime.now(),
-        available=response.status_code >= 200 and response.status_code < 400,
+            url=settings.website_url,
+            http_status=response.status_code,
+            received=datetime.now(),
+            available=response.status_code >= 200 and response.status_code < 400,
         )
-    
+
     except Exception as exc:
 
         signal = Signal(
-        url=settings.website_url,
-        http_status= -1,
-        received=datetime.now(),
-        available=False,
+            url=settings.website_url,
+            http_status=-1,
+            received=datetime.now(),
+            available=False,
         )
 
         raise exc
