@@ -26,10 +26,10 @@ class AppSettings(BaseSettings):
     def celery_broker(self) -> RedisDsn:
         return self.redis_dsn
 
-    frequency: int = 1  # default monitoring frequency
+    frequency: int = 10  # default monitoring frequency
     website_url: str = "https://nf-co.re"
 
-    """ Quest database settings """
+    """ Database settings """
 
     database_scheme: str = "postgresql"
     database_host: str = Field(default="nfcore_stats_db", env="DATABASE_HOST")

@@ -5,7 +5,7 @@ import requests
 
 from .celery import celery_app
 from .db import engine
-from .models import Signal
+from .models import UptimeMonitor
 from .settings import settings
 
 
@@ -22,7 +22,7 @@ def monitor():
     try:
         response = requests.head(settings.website_url)
 
-        signal = Signal(
+        status = UptimeMonitor(
             url=settings.website_url,
             http_status=response.status_code,
             received=datetime.now(),
@@ -31,7 +31,7 @@ def monitor():
 
     except Exception as exc:
 
-        signal = Signal(
+        status = UptimeMonitor(
             url=settings.website_url,
             http_status=-1,
             received=datetime.now(),
@@ -42,5 +42,5 @@ def monitor():
 
     finally:
         with Session(engine) as session:
-            session.add(signal)
+            session.add(status)
             session.commit()

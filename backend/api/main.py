@@ -1,23 +1,14 @@
-from collections import defaultdict
-from typing import List
+import http
 
+from collections import defaultdict
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from sqlmodel import select, SQLModel, Session
+from typing import List
 
 from .db import engine
-from .models import Signal
+from .models import UptimeMonitor, UptimeResponse
 from .settings import settings
-
-
-class SignalResponse(BaseModel):
-    """
-    Indicate the structure of the signals API response.
-    """
-
-    url: str
-    records: List[Signal]
-
 
 app = FastAPI(
     title="nf-core stats API",
@@ -29,34 +20,47 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=[
+        "*"
+    ],  # bind to ["http://localhost:3000"] if frontend app is served at port 3000.
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# Create all database tables if they don't exist yet
+SQLModel.metadata.create_all(engine)
 
-@app.get(path="/signals", response_model=List[SignalResponse], tags=["Monitoring"])
-async def get_signals(limit: int = 60):
+
+@app.get(path="/uptime", response_model=UptimeResponse, tags=["Uptime_Monitoring"])
+async def get_uptime(limit: int = 10):
     """
-    Return the stored monitoring results.
+    Return the stored uptime monitoring results.
 
     The returned signals will be sorted by `received` timestamp in a decreasing
-    order, limited to `50` records if `limit` not set.
+    order, limited to `10` records if `limit` not set.
     """
 
-    query = f"""
-    SELECT * FROM signals WHERE url = '{settings.website_url}' ORDER BY received DESC LIMIT {limit};
-    """
+    try:
 
-    signals = defaultdict(list)
+        with Session(engine) as session:
+            statement = (
+                select(UptimeMonitor)
+                .where(UptimeMonitor.url == settings.website_url)
+                .order_by(UptimeMonitor.received)
+                .limit(limit)
+            )
+            result = session.exec(statement)
 
-    with engine.connect() as conn:
-        for result in conn.execute(query):
-            signal = Signal(**dict(result))
-            signals[signal.url].append(signal)
+            response = defaultdict(list)
+            for record in result:
+                response[record.url].append(record)
 
-    return [
-        SignalResponse(url=url, records=list(reversed(records)))
-        for url, records in signals.items()
-    ]
+            print(response)
+
+            return [
+                UptimeResponse(url=url, records=records)
+                for url, records in response.items()
+            ]
+    except:
+        return http.HTTPStatus.INTERNAL_SERVER_ERROR
