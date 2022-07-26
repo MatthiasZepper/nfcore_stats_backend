@@ -12,7 +12,7 @@ from .main import settings
 celery_app = Celery("tasks", broker=settings.celery_broker)
 celery_app.autodiscover_tasks()
 
-MONITORING_TASK = 'api.tasks.monitor'
+MONITORING_TASK = "api.tasks.monitor"
 
 celery_app.conf.task_routes = {MONITORING_TASK: "main-queue"}
 

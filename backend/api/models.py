@@ -1,9 +1,9 @@
 from datetime import datetime
 
-from pydantic import BaseModel, Field
+from sqlmodel import Field, SQLModel
 
 
-class Signal(BaseModel):
+class Signal(SQLModel, table=True):
     """
     Signal model stands for the results of monitoring requests
     """
@@ -11,4 +11,4 @@ class Signal(BaseModel):
     url: str = Field(..., description="The monitored URL")
     http_status: int = Field(..., description="HTTP status code returned by upstream")
     available: bool = Field(..., description="Represents the service availability")
-    received: datetime = Field(..., description="Timestamp when the signal received")
+    received: datetime = Field(..., description="Timestamp when the signal received", primary_key=True)
