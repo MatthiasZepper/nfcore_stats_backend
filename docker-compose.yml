@@ -16,12 +16,16 @@ services:
 
   nfcore_stats_db:
     container_name: nfcore_stats_db
-    image: "questdb/questdb:latest"
+    image: "postgres:latest"
+    restart: unless-stopped
+    environment:
+      PGDATA: /data/postgres
     volumes:
-      - nfcore_stats_data:/root/.questdb/db
+      - nfcore_stats_data:/data/postgres
+      # For additional initialization add one or more *.sql, *.sql.gz, or *.sh scripts under /docker-entrypoint-initdb.d. After the entrypoint calls initdb to create the default postgres user and database, it will run any *.sql files, run any executable *.sh scripts, and source any non-executable *.sh scripts found in that directory to do further initialization before starting the service
+      - ./config/create_tables.sql:/docker-entrypoint-initdb.d/create_tables.sql
     ports:
-      - "127.0.0.1:9000:9000"
-      - "127.0.0.1:8812:8812"
+      - "127.0.0.1:5432:5432"
     networks:
       - nfcore_stats
     env_file:

@@ -22,6 +22,6 @@ nfcore_stats_api        | [SQL: select pg_catalog.version()]
 
 Also other ORMs like [Tortoise](https://tortoise.github.io) are not supported. Due to the risk of SQL-injections and the relatively small size of the data generated and queried by this application, the decision to switch the database was made.
 
-### Now: MariaDB
+### Now: PostgreSQL
 
-Currently, this application uses MariaDB in a separate container. However, switching to PostgreSQL or a local SQLite database will not be a problem due to the abstraction via SQLModel.
+Currently, this application uses PostgreSQL in a separate container. However, switching to MariaDB or a local SQLite database will not be a problem due to the abstraction via SQLModel.

@@ -33,10 +33,10 @@ class AppSettings(BaseSettings):
 
     database_scheme: str = "postgresql"
     database_host: str = Field(default="nfcore_stats_db", env="DATABASE_HOST")
-    database_port: int = Field(default=8812, env="DATABASE_PORT")
-    database_username: str = Field(default="admin", env="QDB_PG_USER")
-    database_password: str = Field(default="quest", env="QDB_PG_PASSWORD")
-    database_suffix: str = "qdb"
+    database_port: int = Field(default=5432, env="DATABASE_PORT")
+    database_username: str = Field(default="admin", env="POSTGRES_USER")
+    database_password: str = Field(default="quest", env="POSTGRES_PASSWORD")
+    database_name: str = Field(default="nf_core_stats", env="POSTGRES_DB")
     database_url: PostgresDsn
     database_salt: bytes = None
     database_pool_size: int = 3
@@ -47,7 +47,7 @@ class AppSettings(BaseSettings):
             f"{self.database_scheme}://"
             f"{quote_plus(self.database_username)}:{quote_plus(self.database_password)}@"
             f"{quote_plus(self.database_host)}:{self.database_port}/"
-            f"{quote_plus(self.database_suffix)}",
+            f"{quote_plus(self.database_name)}",
             scheme=self.database_scheme,
             host=f"{quote_plus(self.database_host)}",
         )
