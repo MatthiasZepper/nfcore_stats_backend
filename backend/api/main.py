@@ -1,13 +1,14 @@
 import http
+import json
 
 from collections import defaultdict
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import ValidationError
 from sqlmodel import select, SQLModel, Session
-from typing import List
 
 from .db import engine
-from .models import UptimeMonitor, UptimeResponse
+from .models import UptimeRecord, UptimeResponse
 from .settings import settings
 
 app = FastAPI(
@@ -32,22 +33,19 @@ app.add_middleware(
 SQLModel.metadata.create_all(engine)
 
 
-@app.get(path="/uptime", response_model=UptimeResponse, tags=["Uptime_Monitoring"])
+@app.get(path="/uptime/{limit}", response_model=UptimeResponse, tags=["Uptime_Monitoring"])
 async def get_uptime(limit: int = 10):
     """
-    Return the stored uptime monitoring results.
-
-    The returned signals will be sorted by `received` timestamp in a decreasing
-    order, limited to `10` records if `limit` not set.
+    Return the last n results of the Uptime Monitoring.
     """
 
     try:
 
         with Session(engine) as session:
             statement = (
-                select(UptimeMonitor)
-                .where(UptimeMonitor.url == settings.website_url)
-                .order_by(UptimeMonitor.received)
+                select(UptimeRecord)
+                .where(UptimeRecord.url == settings.website_url)
+                .order_by(UptimeRecord.received.desc())
                 .limit(limit)
             )
             result = session.exec(statement)
@@ -56,11 +54,10 @@ async def get_uptime(limit: int = 10):
             for record in result:
                 response[record.url].append(record)
 
-            print(response)
+            if settings.debug:
+                print(response)
 
-            return [
-                UptimeResponse(url=url, records=records)
-                for url, records in response.items()
-            ]
-    except:
+            return(response)
+
+    except ValidationError:
         return http.HTTPStatus.INTERNAL_SERVER_ERROR

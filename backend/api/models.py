@@ -1,26 +1,27 @@
 from datetime import datetime
 
+from pydantic import HttpUrl
 from sqlmodel import Field, SQLModel
-from typing import List
+from typing import Dict, List, Union
 
 
-class UptimeMonitor(SQLModel, table=True):
+class UptimeRecord(SQLModel, table=True):
     """
-    The UptimeMonitor model can be used to see if a website or HTTP service is available at a given time.
+    The UptimeRecord model stores, if a website or HTTP service was available at a given time.
     """
 
-    url: str = Field(..., description="The monitored URL")
+    url: Union[HttpUrl, None] = Field(..., description="The monitored URL")
     http_status: int = Field(..., description="HTTP status code returned by upstream")
     available: bool = Field(..., description="Represents the service availability")
     received: datetime = Field(
         ..., description="Timestamp when the signal received", primary_key=True
     )
 
-
 class UptimeResponse(SQLModel, table=False):
     """
-    API response model for UptimeMonitor (table=False, because it is only used as Pydantic BaseModel)
-    """
+    API response model for UptimeRecord (table=False, because it is only used as Pydantic BaseModel)
 
-    url: str
-    records: List[UptimeMonitor]
+    Finally, this works after 8h thanks to https://stackoverflow.com/a/69329476
+    https://pydantic-docs.helpmanual.io/usage/models/#custom-root-types
+    """ 
+    __root__: Dict[HttpUrl, List[Union[UptimeRecord, None]]]
