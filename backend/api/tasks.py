@@ -5,7 +5,7 @@ import requests
 
 from .celery import celery_app
 from .db import engine
-from .models import UptimeRecord
+from .models.uptime import UptimeRecord
 from .settings import settings
 
 

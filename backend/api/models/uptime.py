@@ -17,11 +17,13 @@ class UptimeRecord(SQLModel, table=True):
         ..., description="Timestamp when the signal received", primary_key=True
     )
 
+
 class UptimeResponse(SQLModel, table=False):
     """
     API response model for UptimeRecord (table=False, because it is only used as Pydantic BaseModel)
 
     Finally, this works after 8h thanks to https://stackoverflow.com/a/69329476
     https://pydantic-docs.helpmanual.io/usage/models/#custom-root-types
-    """ 
+    """
+
     __root__: Dict[HttpUrl, List[Union[UptimeRecord, None]]]

@@ -8,7 +8,7 @@ from pydantic import ValidationError
 from sqlmodel import select, SQLModel, Session
 
 from .db import engine
-from .models import UptimeRecord, UptimeResponse
+from .models.uptime import UptimeRecord, UptimeResponse
 from .settings import settings
 
 app = FastAPI(
@@ -33,7 +33,9 @@ app.add_middleware(
 SQLModel.metadata.create_all(engine)
 
 
-@app.get(path="/uptime/{limit}", response_model=UptimeResponse, tags=["Uptime_Monitoring"])
+@app.get(
+    path="/uptime/{limit}", response_model=UptimeResponse, tags=["Uptime_Monitoring"]
+)
 async def get_uptime(limit: int = 10):
     """
     Return the last n results of the Uptime Monitoring.
@@ -57,7 +59,7 @@ async def get_uptime(limit: int = 10):
             if settings.debug:
                 print(response)
 
-            return(response)
+            return response
 
     except ValidationError:
         return http.HTTPStatus.INTERNAL_SERVER_ERROR
