@@ -13,8 +13,7 @@ class UptimeRecord(SQLModel, table=True):
     url: Union[HttpUrl, None] = Field(..., description="The monitored URL")
     http_status: int = Field(..., description="HTTP status code returned by upstream")
     available: bool = Field(..., description="Represents the service availability")
-    received: datetime = Field(
-        ..., description="Timestamp when the signal received", primary_key=True
+    received: datetime = Field(default_factory=datetime.utcnow, description="Timestamp when the signal received", primary_key=True
     )
 
 
