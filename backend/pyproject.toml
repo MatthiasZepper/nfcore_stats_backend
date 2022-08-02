@@ -9,7 +9,7 @@ license = "MIT"
 python = "^3.8"
 celery = {extras = ["redis"], version = "^5.0.5"}
 databases = {version = "^0.4.1", extras = ["postgresql"]}
-fastapi = "^0.62.0"
+fastapi = "^0.65.2"
 psycopg2 = "^2.8.6"
 pydantic = "^1.7.3"
 requests = "^2.25.1"
