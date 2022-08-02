@@ -3,7 +3,7 @@ from datetime import datetime
 
 from pydantic import AnyUrl, BaseModel, Json,  HttpUrl, UUID4, validator
 from sqlmodel import Field, Relationship, SQLModel
-from typing import List, Optional
+from typing import List, Optional, Set
 
 
 
@@ -29,7 +29,7 @@ class RemoteWorkflow(SQLModel, table=True):
     private: bool = Field(..., description="Is the repository private or publicly visible?")
     html_url: HttpUrl = Field(..., description="The URL of the repository on Github.")
     description: Optional[str]  = Field(..., description=" The description of the repository.")
-    topics: Optional[List["RemoteWorkflowTopic"]] = Relationship(back_populates="remote_workflows", link_model=RemoteWorkflowTopicLink)
+    topics: Optional[Set["RemoteWorkflowTopic"]] = Relationship(back_populates="remote_workflows", link_model=RemoteWorkflowTopicLink)
     created_at: datetime  = Field(..., description="The time point when the workflow was created.")
     updated_at: datetime  = Field(..., description="The last time this workflow was updated.")
     pushed_at: datetime  = Field(..., description="The most recent push to this workflow.")
@@ -112,8 +112,8 @@ class PipelineSummary(SQLModel, table=True):
 
 
 
-class PipelinesLoadAPI(BaseModel):
+class PipelinesLoadAPI(PipelineSummary):
     """
     The PipelinesLoad model is used in API endpoint for importing a pipelines.json to the database.
     """
-    json_obj: Json[PipelineSummary]
+    pass

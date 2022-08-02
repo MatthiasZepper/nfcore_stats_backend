@@ -2,12 +2,13 @@ import http
 import json
 
 from collections import defaultdict
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import ValidationError
 from sqlmodel import select, SQLModel, Session
 
-from .db import engine
+from .db import engine, get_session
+from .models.pipelines import PipelinesLoadAPI, PipelineSummary
 from .models.uptime import UptimeRecord, UptimeResponse
 from .settings import settings
 
@@ -30,36 +31,48 @@ app.add_middleware(
 )
 
 # Create all database tables if they don't exist yet
-SQLModel.metadata.create_all(engine)
+@app.on_event("startup")
+def on_startup():
+    SQLModel.metadata.create_all(engine)
 
+#############################################################################################
 
 @app.get(
-    path="/uptime/{limit}", response_model=UptimeResponse, tags=["Uptime_Monitoring"]
+    path="/get/uptime/{limit}", response_model=UptimeResponse, tags=["Uptime_Monitoring"]
 )
-async def get_uptime(limit: int = 10):
+async def get_uptime(limit: int = 10, session: Session = Depends(get_session)):
     """
     Return the last n results of the Uptime Monitoring.
     """
 
     try:
 
-        with Session(engine) as session:
-            statement = (
-                select(UptimeRecord)
-                .where(UptimeRecord.url == settings.website_url)
-                .order_by(UptimeRecord.received.desc())
-                .limit(limit)
-            )
-            result = session.exec(statement)
+        statement = (
+            select(UptimeRecord)
+            .where(UptimeRecord.url == settings.website_url)
+            .order_by(UptimeRecord.received.desc())
+            .limit(limit)
+        )
+        result = session.exec(statement)
 
-            response = defaultdict(list)
-            for record in result:
-                response[record.url].append(record)
+        response = defaultdict(list)
+        for record in result:
+            response[record.url].append(record)
 
-            if settings.debug:
-                print(response)
+        if settings.debug:
+            print(response)
 
-            return response
+        return response
 
     except ValidationError:
         return http.HTTPStatus.INTERNAL_SERVER_ERROR
+
+#############################################################################################
+
+@app.put("/json/pipelines")
+async def ingest_pipeline_info(json_obj: PipelineSummary, session: Session = Depends(get_session)):
+    session.add(json_obj)
+    session.commit()
+    session.refresh(json_obj)
+    return { "OK" }
+
