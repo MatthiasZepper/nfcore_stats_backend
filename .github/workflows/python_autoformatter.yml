@@ -21,7 +21,7 @@ jobs:
       - name: Black Formatter Check
         uses: lgeiger/black-action@v1.0.1
         with:
-          args: . --config ./pyproject.toml --verbose  --diff --color
+          args: . --config ./backend/pyproject.toml --verbose  --diff --color
 
       - name: isort Check
         uses: isort/isort-action@master

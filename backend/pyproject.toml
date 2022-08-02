@@ -7,13 +7,13 @@ license = "MIT"
 
 [tool.poetry.dependencies]
 python = "^3.8"
-celery = {extras = ["redis"], version = "^5.0.5"}
+celery = {extras = ["redis"], version = "^5.2.2"}
 databases = {version = "^0.4.1", extras = ["postgresql"]}
-fastapi = "^0.62.0"
+fastapi = "^0.65.2"
 psycopg2 = "^2.8.6"
 pydantic = "^1.7.3"
 requests = "^2.25.1"
-uvicorn = "^0.13.0"
+uvicorn = "^0.14.0"
 sqlmodel = "^0.0.6"
 SQLAlchemy = ">=1.4.17,<=1.4.35"
 
@@ -41,3 +41,4 @@ include_trailing_comma = true
 order_by_type = true
 line_length = 88  # Same as Black's line length
 multi_line_output = 3
+profile = "black"
