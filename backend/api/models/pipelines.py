@@ -25,7 +25,7 @@ class RemoteWorkflow(SQLModel, table=True):
 
     id: int = Field(default=None, primary_key=True, description="The ID of the remote workflow.")
     name: str = Field(..., description="The base name of the pipeline/repo.")
-    full_name: Field(..., description="The full name of the pipeline/repo including nf-core.")
+    full_name: str = Field(..., description="The full name of the pipeline/repo including nf-core.")
     private: bool = Field(..., description="Is the repository private or publicly visible?")
     html_url: HttpUrl = Field(..., description="The URL of the repository on Github.")
     description: Optional[str]  = Field(..., description=" The description of the repository.")
@@ -70,7 +70,7 @@ class Release(SQLModel, table=True):
     zipball_url: HttpUrl = Field(..., description="Where to download the .zip archive of the release.")
 
     # One to many relationship: One remote workflow can have many releases, but each release is linked to one workflow only.
-    remote_workflow_id: int = Field(default=None, foreign_key="remote_workflow.id")
+    remote_workflow_id: int = Field(default=None, foreign_key="remoteworkflow.id")
     remote_workflow: RemoteWorkflow = Relationship(back_populates="releases")
 
     @validator('html_url', 'tarball_url', 'zipball_url', pre=True)
@@ -107,12 +107,12 @@ class PipelineSummary(SQLModel, table=True):
     archived_count: int = Field(..., description="The size of the pipeline archive.")
 
     #One to many relationship: Each Pipeline summary can reference a remote workflow only once.
-    remote_workflow_id: int = Field(default=None, foreign_key="remote_workflow.id")
+    remote_workflow_id: int = Field(default=None, foreign_key="remoteworkflow.id")
     remote_workflow: List[RemoteWorkflow] = Relationship(back_populates="pipeline")
 
 
 
-class PipelinesLoadAPI(BaseModel, table=False):
+class PipelinesLoadAPI(BaseModel):
     """
     The PipelinesLoad model is used in API endpoint for importing a pipelines.json to the database.
     """
