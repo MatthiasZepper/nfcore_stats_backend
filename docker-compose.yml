@@ -1,7 +1,8 @@
 version: "3"
 
 volumes:
-  nfcore_stats_data: {}
+  nfcore_stats_data:
+  nfcore_stats_redis:
 
 services:
   nfcore_stats_redis:
@@ -9,6 +10,8 @@ services:
     build:
       context: .
       dockerfile: ./dockerfiles/DockerfileRedis
+    volumes:
+      - nfcore_stats_redis:/data
     ports:
       - "127.0.0.1:6379:6379"
     networks:
