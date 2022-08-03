@@ -1,5 +1,4 @@
 import http
-import json
 
 from collections import defaultdict
 from fastapi import Depends, FastAPI
@@ -35,10 +34,14 @@ app.add_middleware(
 def on_startup():
     SQLModel.metadata.create_all(engine)
 
+
 #############################################################################################
 
+
 @app.get(
-    path="/get/uptime/{limit}", response_model=UptimeResponse, tags=["Uptime_Monitoring"]
+    path="/get/uptime/{limit}",
+    response_model=UptimeResponse,
+    tags=["Uptime_Monitoring"],
 )
 async def get_uptime(limit: int = 10, session: Session = Depends(get_session)):
     """
@@ -67,12 +70,15 @@ async def get_uptime(limit: int = 10, session: Session = Depends(get_session)):
     except ValidationError:
         return http.HTTPStatus.INTERNAL_SERVER_ERROR
 
+
 #############################################################################################
 
+
 @app.put("/json/pipelines")
-async def ingest_pipeline_info(json_obj: PipelineSummary, session: Session = Depends(get_session)):
+async def ingest_pipeline_info(
+    json_obj: PipelineSummary, session: Session = Depends(get_session)
+):
     session.add(json_obj)
     session.commit()
     session.refresh(json_obj)
-    return { "OK" }
-
+    return {"OK"}
