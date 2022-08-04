@@ -19,6 +19,19 @@ class RemoteWorkflowTopicLink(SQLModel, table=True):
     )
 
 
+class RemoteWorkflowPipelineSummaryLink(SQLModel, table=True):
+    """
+    The RemoteWorkflowPipelineSummaryLink is link table between RemoteWorkflow and PipelineSummary.
+    """
+
+    remote_workflow_id: Optional[int] = Field(
+        default=None, foreign_key="remoteworkflow.id", primary_key=True
+    )
+    pipeline_summary_id: Optional[UUID4] = Field(
+        default=None, foreign_key="pipelinesummary.id", primary_key=True
+    )
+
+
 class RemoteWorkflow(SQLModel, table=True):
     """
     The RemoteWorkflow model is the main model representing the information for each pipeline.
@@ -67,7 +80,9 @@ class RemoteWorkflow(SQLModel, table=True):
 
     # Using "Release" in quotes because we haven't declared that class yet by this point in the code (but SQLModel understands that).
     releases: List["Release"] = Relationship(back_populates="remote_workflow")
-    pipeline: List["PipelineSummary"] = Relationship(back_populates="remote_workflow")
+    pipeline: List["PipelineSummary"] = Relationship(
+        back_populates="remote_workflow", link_model=RemoteWorkflowPipelineSummaryLink
+    )
 
     @validator("html_url", "git_url", "clone_url", pre=True)
     def replace_backslashes(cls, v):
@@ -161,8 +176,9 @@ class PipelineSummary(SQLModel, table=True):
     archived_count: int = Field(..., description="The size of the pipeline archive.")
 
     # One to many relationship: Each Pipeline summary can reference a remote workflow only once.
-    remote_workflow_id: int = Field(default=None, foreign_key="remoteworkflow.id")
-    remote_workflow: List[RemoteWorkflow] = Relationship(back_populates="pipeline")
+    remote_workflow: Optional[Set["RemoteWorkflow"]] = Relationship(
+        back_populates="pipeline", link_model=RemoteWorkflowPipelineSummaryLink
+    )
 
 
 class PipelinesLoadAPI(PipelineSummary):

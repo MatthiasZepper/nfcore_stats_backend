@@ -7,7 +7,7 @@ from pydantic import ValidationError
 from sqlmodel import select, SQLModel, Session
 
 from .db import engine, get_session
-from .models.pipelines import PipelinesLoadAPI, PipelineSummary
+from .models.pipelines import PipelineSummary, RemoteWorkflow, RemoteWorkflowTopic
 from .models.uptime import UptimeRecord, UptimeResponse
 from .settings import settings
 
@@ -19,6 +19,9 @@ app = FastAPI(
     docs_url=None,
 )
 
+
+# CORS (Cross-Origin Resource Sharing)¶
+# https://fastapi.tiangolo.com/tutorial/cors/
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -76,9 +79,45 @@ async def get_uptime(limit: int = 10, session: Session = Depends(get_session)):
 
 @app.put("/json/pipelines")
 async def ingest_pipeline_info(
-    json_obj: PipelineSummary, session: Session = Depends(get_session)
+    pipeline_summary: PipelineSummary, session: Session = Depends(get_session)
 ):
-    session.add(json_obj)
-    session.commit()
-    session.refresh(json_obj)
-    return {"OK"}
+
+    statement = select(PipelineSummary).where(
+        PipelineSummary.updated == pipeline_summary.updated
+    )
+    existing_pipeline_summary = session.exec(statement).first()
+
+    if (
+        existing_pipeline_summary
+    ):  # this file has already been imported to the database.
+
+        print(item for item in pipeline_summary.remote_workflow)
+        return {"This version of pipeline.json has already been imported."}
+
+    else:  # this version of pipelines.json was not imported yet.
+        session.add(pipeline_summary)
+        session.commit()
+        session.refresh(pipeline_summary)
+
+        if pipeline_summary.remote_workflow:  # there are associated workflows
+            for remote_workflow in pipeline_summary.remote_workflow:
+
+                statement = select(RemoteWorkflow).where(
+                    RemoteWorkflow.name == remote_workflow.name
+                )
+                existing_remote_workflow = session.exec(statement)
+
+                if existing_remote_workflow:
+                    remote_workflow_data = remote_workflow.dict(exclude_unset=True)
+                    for key, value in remote_workflow_data.items():
+                        setattr(existing_remote_workflow, key, value)
+                        session.add(existing_remote_workflow)
+                        session.commit()
+                        session.refresh(existing_remote_workflow)
+
+                else:
+                    session.add(remote_workflow)
+                    session.commit(remote_workflow)
+                    session.refresh(remote_workflow)
+
+        return {"OK"}
