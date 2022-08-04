@@ -5,7 +5,7 @@ from pydantic import AnyUrl, BaseModel, Json, HttpUrl, UUID4, validator
 from sqlmodel import Field, Relationship, SQLModel
 from typing import List, Optional, Set
 
-
+#### The association tables
 class RemoteWorkflowTopicLink(SQLModel, table=True):
     """
     The RemoteWorkflowTopicLink is link table between RemoteWorkflow and RemoteWorkflowTopic.
@@ -32,7 +32,10 @@ class RemoteWorkflowPipelineSummaryLink(SQLModel, table=True):
     )
 
 
-class RemoteWorkflow(SQLModel, table=True):
+#### Remote Workflow - aka Pipelines - Models
+
+
+class RemoteWorkflowBase(SQLModel):
     """
     The RemoteWorkflow model is the main model representing the information for each pipeline.
     """
@@ -51,9 +54,7 @@ class RemoteWorkflow(SQLModel, table=True):
     description: Optional[str] = Field(
         ..., description=" The description of the repository."
     )
-    topics: Optional[Set["RemoteWorkflowTopic"]] = Relationship(
-        back_populates="remote_workflows", link_model=RemoteWorkflowTopicLink
-    )
+
     created_at: datetime = Field(
         ..., description="The time point when the workflow was created."
     )
@@ -78,12 +79,6 @@ class RemoteWorkflow(SQLModel, table=True):
     )
     archived: bool = Field(..., description="Is the workflow current or archived?")
 
-    # Using "Release" in quotes because we haven't declared that class yet by this point in the code (but SQLModel understands that).
-    releases: List["Release"] = Relationship(back_populates="remote_workflow")
-    pipeline: List["PipelineSummary"] = Relationship(
-        back_populates="remote_workflow", link_model=RemoteWorkflowPipelineSummaryLink
-    )
-
     @validator("html_url", "git_url", "clone_url", pre=True)
     def replace_backslashes(cls, v):
         """
@@ -92,7 +87,26 @@ class RemoteWorkflow(SQLModel, table=True):
         return v.replace("\\", "")
 
 
-class Release(SQLModel, table=True):
+class RemoteWorkflow(RemoteWorkflowBase, table=True):  # the table model
+
+    # Using "Release" and "PipelineSummary" in quotes because we haven't declared that class yet by this point in the code (but SQLModel understands that).
+    # We however later need to update_forward_refs(), such that from_orm() will work.
+    topics: Optional[Set["RemoteWorkflowTopic"]] = Relationship(
+        back_populates="remote_workflows", link_model=RemoteWorkflowTopicLink
+    )
+    releases: Optional[List["Release"]] = Relationship(back_populates="remote_workflow")
+    pipeline: Optional[List["PipelineSummary"]] = Relationship(
+        back_populates="remote_workflow", link_model=RemoteWorkflowPipelineSummaryLink
+    )
+
+    class Config:
+        orm_mode = True
+
+
+#### Release - Models
+
+
+class ReleaseBase(SQLModel):
     """
     The Release model stores the pipeline release information
     """
@@ -126,7 +140,6 @@ class Release(SQLModel, table=True):
 
     # One to many relationship: One remote workflow can have many releases, but each release is linked to one workflow only.
     remote_workflow_id: int = Field(default=None, foreign_key="remoteworkflow.id")
-    remote_workflow: RemoteWorkflow = Relationship(back_populates="releases")
 
     @validator("html_url", "tarball_url", "zipball_url", pre=True)
     def replace_backslashes(cls, v):
@@ -139,6 +152,23 @@ class Release(SQLModel, table=True):
         return v.replace("\\", "")
 
 
+class Release(ReleaseBase, table=True):
+    remote_workflow: RemoteWorkflow = Relationship(back_populates="releases")
+
+
+#### RemoteWorkflow Topics - aka Tags - Models
+
+
+class RemoteWorkflowTopicBase(SQLModel):
+    """
+    A separate class/database table to handle tags efficiently.
+    """
+
+    topic: str = Field(
+        ..., description="Topics that can be associated with a pipeline."
+    )
+
+
 class RemoteWorkflowTopic(SQLModel, table=True):
     """
     A separate class/database table to handle tags efficiently.
@@ -146,7 +176,7 @@ class RemoteWorkflowTopic(SQLModel, table=True):
 
     id: Optional[int] = Field(default=None, primary_key=True)
     topic: str = Field(
-        ..., description="Topics that can be associated with a pipeline."
+        ..., index=True, description="Topics that can be associated with a pipeline."
     )
 
     # many to many relationship with remote workflows.
@@ -154,13 +184,18 @@ class RemoteWorkflowTopic(SQLModel, table=True):
         back_populates="topics", link_model=RemoteWorkflowTopicLink
     )
 
+    class Config:
+        orm_mode = True
 
-class PipelineSummary(SQLModel, table=True):
+
+#### The Pipeline Summary Model: Meta-model for ingesting data
+
+
+class PipelineSummaryBase(SQLModel):
     """
     The PipelineSummary model is the top-level model that enriches a list of RemoteWorkflows with some metadata.
     """
 
-    id: UUID4 = Field(default_factory=uuid.uuid4, primary_key=True)
     received: Optional[datetime] = Field(
         default_factory=datetime.utcnow,
         description="Timestamp when the JSON information was received.",
@@ -175,15 +210,30 @@ class PipelineSummary(SQLModel, table=True):
     )
     archived_count: int = Field(..., description="The size of the pipeline archive.")
 
+
+class PipelineSummary(PipelineSummaryBase, table=True):
+
+    id: UUID4 = Field(default_factory=uuid.uuid4, primary_key=True)
+
     # One to many relationship: Each Pipeline summary can reference a remote workflow only once.
     remote_workflow: Optional[Set["RemoteWorkflow"]] = Relationship(
         back_populates="pipeline", link_model=RemoteWorkflowPipelineSummaryLink
     )
 
+    class Config:
+        orm_mode = True
 
-class PipelinesLoadAPI(PipelineSummary):
+
+class PipelineSummaryCreate(PipelineSummary):
     """
     The PipelinesLoad model is used in API endpoint for importing a pipelines.json to the database.
     """
 
     pass
+
+
+# Update the forward refs to make the Relationships work in main.py with .from_orm()
+
+RemoteWorkflow.update_forward_refs()
+RemoteWorkflowTopic.update_forward_refs()
+PipelineSummary.update_forward_refs()

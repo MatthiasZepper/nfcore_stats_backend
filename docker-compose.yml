@@ -33,6 +33,12 @@ services:
       - nfcore_stats
     env_file:
       - ./config/.env
+    healthcheck:
+      # $$ such that the variables are not parsed by Docker, but only inside the container where they are set from the .env file.
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   nfcore_stats_api:
     container_name: nfcore_stats_api
@@ -40,9 +46,12 @@ services:
       context: .
       dockerfile: ./dockerfiles/DockerfilePython
     depends_on:
-      - nfcore_stats_scheduler
-      - nfcore_stats_db
-      - nfcore_stats_redis
+      nfcore_stats_db:
+        condition: service_healthy
+      nfcore_stats_redis:
+        condition: service_started
+      nfcore_stats_scheduler:
+        condition: service_started
     restart: always
     volumes:
       - ./backend:/mnt/backend
@@ -50,6 +59,8 @@ services:
       - ./config/.env
     ports:
       - "127.0.0.1:8000:8000"
+    tty: true #for debugging with pdb
+    stdin_open: true # docker container attach nfcore_stats_api
     networks:
       - nfcore_stats
     command: /mnt/backend/run/start_api.sh
