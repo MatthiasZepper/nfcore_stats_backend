@@ -5,6 +5,19 @@ from pydantic import AnyUrl, BaseModel, Json, HttpUrl, UUID4, validator
 from sqlmodel import Field, Relationship, SQLModel
 from typing import List, Optional, Set
 
+"""
+Each model entity in this file may have several associated models declared:
+
+    ModelEntityBASE: This is a data model only that specifies the core attributes of an entity
+    ModelEntity: Inherits from BASE and is the actual table model (table=True) including relationships.
+    ModelEntityCREATE: The values required to create an Instance of the model entity. 
+    ModelEntityREAD: The values returned as response if a particular model entity is read, may be multiple for different applications.
+    ModelEntityModelEntityLINK: Association tables for Many-to-Many relationships.
+
+    See https://sqlmodel.tiangolo.com/tutorial/fastapi/multiple-models/ for the benefits of this approach.  
+"""
+
+
 #### The association tables
 class RemoteWorkflowTopicLink(SQLModel, table=True):
     """
@@ -82,7 +95,7 @@ class RemoteWorkflowBase(SQLModel):
     @validator("html_url", "git_url", "clone_url", pre=True)
     def replace_backslashes(cls, v):
         """
-        Replace backslash escapes in URLs as before. Reusing the validator was impossible due to execution order.
+        Replace backslash escapes in URLs. See validator of ReleaseBase for a more detailed info.
         """
         return v.replace("\\", "")
 
@@ -101,6 +114,12 @@ class RemoteWorkflow(RemoteWorkflowBase, table=True):  # the table model
 
     class Config:
         orm_mode = True
+
+
+class RemoteWorkflowCreate(RemoteWorkflowBase):
+    topics: Optional[Set["RemoteWorkflowTopic"]]
+    releases: Optional[List["Release"]]
+    pipeline: Optional[List["PipelineSummary"]]
 
 
 #### Release - Models
@@ -169,15 +188,12 @@ class RemoteWorkflowTopicBase(SQLModel):
     )
 
 
-class RemoteWorkflowTopic(SQLModel, table=True):
+class RemoteWorkflowTopic(RemoteWorkflowTopicBase, table=True):
     """
     A separate class/database table to handle tags efficiently.
     """
 
     id: Optional[int] = Field(default=None, primary_key=True)
-    topic: str = Field(
-        ..., index=True, description="Topics that can be associated with a pipeline."
-    )
 
     # many to many relationship with remote workflows.
     remote_workflows: List[RemoteWorkflow] = Relationship(
@@ -186,6 +202,11 @@ class RemoteWorkflowTopic(SQLModel, table=True):
 
     class Config:
         orm_mode = True
+
+
+class RemoteWorkflowTopicCreate(SQLModel):
+
+    pass
 
 
 #### The Pipeline Summary Model: Meta-model for ingesting data
@@ -224,12 +245,12 @@ class PipelineSummary(PipelineSummaryBase, table=True):
         orm_mode = True
 
 
-class PipelineSummaryCreate(PipelineSummary):
+class PipelineSummaryCreate(PipelineSummaryBase):
     """
-    The PipelinesLoad model is used in API endpoint for importing a pipelines.json to the database.
+    The PipelineSummaryCreate model is used in API endpoint for importing a pipelines.json file into the database.
     """
 
-    pass
+    remote_workflows: List
 
 
 # Update the forward refs to make the Relationships work in main.py with .from_orm()
