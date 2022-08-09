@@ -17,6 +17,6 @@ engine = create_engine(
 )
 
 
-def get_session():
+def get_session() -> Session:
     with Session(engine) as session:
         yield session

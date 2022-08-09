@@ -2,8 +2,8 @@ name: Autoformat Python
 
 on:
   push:
-    paths:
-      - "**.py"
+    branches:
+      - main
   pull_request:
     paths:
       - "**.py"

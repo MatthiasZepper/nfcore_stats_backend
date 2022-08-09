@@ -7,9 +7,11 @@ from pydantic import ValidationError
 from sqlmodel import select, SQLModel, Session
 
 from .database_logic.db import engine, get_session
+from .database_logic.pipelines_crud import PipelinesCRUD
 from .models.pipelines import (
     PipelineSummaryCreate,
     PipelineSummary,
+    PipelineSummaryBase,
     RemoteWorkflowCreate,
     RemoteWorkflowTopicCreate,
 )
@@ -48,9 +50,8 @@ async def health_check():
     return {
         "name": settings.project_name,
         "version": settings.project_version,
-        "description": settings.project_description
+        "description": settings.project_description,
     }
-
 
 
 #############################################################################################
@@ -94,7 +95,27 @@ async def get_uptime(limit: int = 10, session: Session = Depends(get_session)):
 
 @app.put("/json/pipelines")
 async def ingest_pipeline_info(
-    *, pipeline_summary: PipelineSummaryCreate, session: Session = Depends(get_session)
+    *, input_data: PipelineSummaryCreate, session: Session = Depends(get_session)
 ):
-    import pdb; pdb.set_trace()
+    import pdb
+
+    pdb.set_trace()
+    # initiate database operation -> easy transition to async CRUD later if needed.
+    crud = PipelinesCRUD(session=session)
+
+    input_workflows = input_data.remote_workflows.pop()
+
+    # check if pipeline_summary has already been imported
+    # since its ID is unknown, match the value of updated
+    pipeline_summary = crud.get_by_updated(input_data.updated, raise_exc=False)
+
+    if not pipeline_summary:
+        pipeline_summary = crud.create(data=input_data)
+    else:
+        pipeline_summary = crud.patch(
+            pipeline_summary_id=pipeline_summary.id, data=input_data
+        )
+
+    # create and link the remote workflows.
+
     return {"OK"}
