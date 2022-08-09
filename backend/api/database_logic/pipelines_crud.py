@@ -20,7 +20,11 @@ class PipelinesCRUD:
         self.session = session
 
     def create(self, data: PipelineSummaryCreate) -> PipelineSummary:
-        values = data.dict()
+        if isinstance(data, dict):
+            values = data
+        else:
+            values = data.dict()
+            
         pipeline_summary = PipelineSummary(**values)
         self.session.add(pipeline_summary)
         self.session.commit()
@@ -36,7 +40,7 @@ class PipelinesCRUD:
             PipelineSummary.id == pipeline_summary_id
         )
         results = self.session.execute(statement=statement)
-        pipeline_summary = results.scalar_one_or_none(inherit_cache=True)
+        pipeline_summary = results.scalar_one_or_none()
 
         # optional to fail silently and return None if
         if pipeline_summary is None and raise_exc:
@@ -47,11 +51,18 @@ class PipelinesCRUD:
 
         return pipeline_summary
 
-    def get_by_updated(self, updated: int, raise_exc: bool = True) -> PipelineSummary:
+    def exists(self, query: PipelineSummaryBase, raise_exc: bool = True) -> PipelineSummary:
 
-        statement = select(PipelineSummary).where(PipelineSummary.updated == updated)
+        if hasattr(query,"updated"): #gitURL is probably safer than name to check for duplicates
+
+            statement = select(PipelineSummary).where(PipelineSummary.updated == query.updated)
+
+        else:
+            return None  #no possibility to check for duplication.
+
+        
         results = self.session.execute(statement=statement)
-        pipeline_summary = results.scalar_one_or_none(inherit_cache=True)
+        pipeline_summary = results.scalar_one_or_none()
 
         # optional to fail silently and return None if
         if pipeline_summary is None and raise_exc:

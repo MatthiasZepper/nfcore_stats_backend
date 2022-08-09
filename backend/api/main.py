@@ -8,6 +8,7 @@ from sqlmodel import select, SQLModel, Session
 
 from .database_logic.db import engine, get_session
 from .database_logic.pipelines_crud import PipelinesCRUD
+from .database_logic.remote_workflows_crud import RemoteWorkflowCRUD
 from .models.pipelines import (
     PipelineSummaryCreate,
     PipelineSummary,
@@ -97,17 +98,14 @@ async def get_uptime(limit: int = 10, session: Session = Depends(get_session)):
 async def ingest_pipeline_info(
     *, input_data: PipelineSummaryCreate, session: Session = Depends(get_session)
 ):
-    import pdb
 
-    pdb.set_trace()
     # initiate database operation -> easy transition to async CRUD later if needed.
+    # SQLModel's versions of select and delete might be async by default...hhm.
     crud = PipelinesCRUD(session=session)
-
-    input_workflows = input_data.remote_workflows.pop()
 
     # check if pipeline_summary has already been imported
     # since its ID is unknown, match the value of updated
-    pipeline_summary = crud.get_by_updated(input_data.updated, raise_exc=False)
+    pipeline_summary = crud.exists(query=input_data, raise_exc=False)
 
     if not pipeline_summary:
         pipeline_summary = crud.create(data=input_data)
@@ -117,5 +115,18 @@ async def ingest_pipeline_info(
         )
 
     # create and link the remote workflows.
+    crud = RemoteWorkflowCRUD(session=session)
+
+    for input_workflow in input_data.remote_workflows:
+        
+
+        remote_workflow = crud.exists(query=input_workflow, raise_exc=False)
+        import pdb; pdb.set_trace()
+        if not remote_workflow:
+            remote_workflow = crud.create(data=input_workflow)
+        else:
+            remote_workflow = crud.patch(
+                remote_workflow_id=remote_workflow.id, data=input_workflow
+            )
 
     return {"OK"}

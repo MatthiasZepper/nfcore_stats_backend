@@ -15,9 +15,8 @@ class RemoteWorkflowCRUD:
     def __init__(self, session: Session):
         self.session = session
 
-    def create(self, data: RemoteWorkflowCreate) -> RemoteWorkflow:
-        values = data.dict()
-        remote_workflow = RemoteWorkflow(**values)
+    def create(self, data: RemoteWorkflowBase) -> RemoteWorkflow: 
+        remote_workflow = RemoteWorkflow(**data)
         self.session.add(remote_workflow)
         self.session.commit()
         self.session.refresh(remote_workflow)
@@ -30,7 +29,7 @@ class RemoteWorkflowCRUD:
             RemoteWorkflow.id == remote_workflow_id
         )
         results = self.session.execute(statement=statement)
-        remote_workflow = results.scalar_one_or_none(inherit_cache=True)
+        remote_workflow = results.scalar_one_or_none()
 
         # optional to fail silently and return None if
         if remote_workflow is None and raise_exc:
@@ -41,20 +40,23 @@ class RemoteWorkflowCRUD:
 
         return remote_workflow
 
-    def get_by_name_or_github(
-        self, query: Union[str, AnyUrl], raise_exc: bool = True
+    def exists(
+        self, query: RemoteWorkflowBase, raise_exc: bool = True
     ) -> RemoteWorkflow:
 
-        if isinstance(query, AnyUrl):
+        if hasattr(query,"git_url"): #gitURL is probably safer than name to check for duplicates
 
-            statement = select(RemoteWorkflow).where(RemoteWorkflow.git_url == query)
+            statement = select(RemoteWorkflow).where(RemoteWorkflow.git_url == query.git_url)
 
-        else:
+        elif hasattr(query,"name"):
 
             statement = select(RemoteWorkflow).where(RemoteWorkflow.name == query)
+        
+        else:
+            return None  #no possibility to check for duplication.
 
         results = self.session.execute(statement=statement)
-        remote_workflow = results.scalar_one_or_none(inherit_cache=True)
+        remote_workflow = results.scalar_one_or_none()
 
         # optional to fail silently and return None if
         if remote_workflow is None and raise_exc:

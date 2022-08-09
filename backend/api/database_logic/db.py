@@ -1,4 +1,9 @@
 from sqlmodel import create_engine, Session
+from sqlmodel.sql.expression import Select, SelectOfScalar
+
+# Temporary fix for bug in SQLModel 0.0.6: https://github.com/tiangolo/sqlmodel/issues/189
+SelectOfScalar.inherit_cache = True  # type: ignore 
+Select.inherit_cache = True  # type: ignore
 
 from ..settings import settings
 
