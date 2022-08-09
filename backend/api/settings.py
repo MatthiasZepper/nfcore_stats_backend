@@ -16,7 +16,10 @@ class AppSettings(BaseSettings):
     """ Project metadata """
 
     project_path: Path = Path(__file__).parent.resolve()
-    project_name: str = project_path.name
+    repo_name: str = project_path.name
+    project_name: str = "nf-core stats API"
+    project_version: str = "0.1.0"
+    project_description: str = "This service collects and returns the statistics for the nf-core community."
 
     """ Celery settings """
 

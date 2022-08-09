@@ -4,7 +4,7 @@ from sqlmodel import Session
 import requests
 
 from .celery import celery_app
-from .db import engine
+from .database_logic.db import engine
 from .models.uptime import UptimeRecord
 from .settings import settings
 

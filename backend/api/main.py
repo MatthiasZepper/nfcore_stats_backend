@@ -6,8 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import ValidationError
 from sqlmodel import select, SQLModel, Session
 
-from .db import engine, get_session
-from .functions import create_if_not_exists
+from .database_logic.db import engine, get_session
 from .models.pipelines import (
     PipelineSummaryCreate,
     PipelineSummary,
@@ -18,9 +17,9 @@ from .models.uptime import UptimeRecord, UptimeResponse
 from .settings import settings
 
 app = FastAPI(
-    title="nf-core stats API",
-    description="This service collects and returns the statistics for the nf-core community.",
-    version="0.1.0",
+    title=settings.project_name,
+    description=settings.project_description,
+    version=settings.project_version,
     debug=settings.debug,
     docs_url="/docs",
 )
@@ -42,6 +41,16 @@ app.add_middleware(
 @app.on_event("startup")
 def on_startup():
     SQLModel.metadata.create_all(engine)
+
+
+@app.get("/", tags=["Status"])
+async def health_check():
+    return {
+        "name": settings.project_name,
+        "version": settings.project_version,
+        "description": settings.project_description
+    }
+
 
 
 #############################################################################################
@@ -87,4 +96,5 @@ async def get_uptime(limit: int = 10, session: Session = Depends(get_session)):
 async def ingest_pipeline_info(
     *, pipeline_summary: PipelineSummaryCreate, session: Session = Depends(get_session)
 ):
+    import pdb; pdb.set_trace()
     return {"OK"}

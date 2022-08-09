@@ -1,6 +1,6 @@
 from sqlmodel import create_engine, Session
 
-from .settings import settings
+from ..settings import settings
 
 
 # check_same_thread is a configuration that SQLAlchemy passes to the low-level library in charge of communicating with the database.

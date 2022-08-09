@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from pydantic import AnyUrl, BaseModel, Json, HttpUrl, UUID4, validator
+from pydantic import AnyUrl, HttpUrl, UUID4, validator
 from sqlmodel import Field, Relationship, SQLModel
 from typing import List, Optional, Set
 
