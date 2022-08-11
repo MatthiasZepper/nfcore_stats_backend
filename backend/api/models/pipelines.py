@@ -3,7 +3,7 @@ from datetime import datetime
 
 from pydantic import AnyUrl, HttpUrl, UUID4, validator
 from sqlmodel import Field, Relationship, SQLModel
-from typing import List, Optional, Set
+from typing import List, Optional, Set, Union
 
 """
 Each model entity in this file may have several associated models declared:
@@ -53,8 +53,7 @@ class RemoteWorkflowBase(SQLModel):
     The RemoteWorkflow model is the main model representing the information for each pipeline.
     """
 
-    id: int = Field(
-        default=None, primary_key=True, description="The ID of the remote workflow."
+    id: int = Field(..., description="The ID of the remote workflow."
     )
     name: str = Field(..., description="The base name of the pipeline/repo.")
     full_name: str = Field(
@@ -102,6 +101,8 @@ class RemoteWorkflowBase(SQLModel):
 
 class RemoteWorkflow(RemoteWorkflowBase, table=True):  # the table model
 
+    id: int = Field(..., primary_key=True)
+
     # Using "Release" and "PipelineSummary" in quotes because we haven't declared that class yet by this point in the code (but SQLModel understands that).
     # We however later need to update_forward_refs(), such that from_orm() will work.
     topics: Optional[Set["RemoteWorkflowTopic"]] = Relationship(
@@ -117,9 +118,9 @@ class RemoteWorkflow(RemoteWorkflowBase, table=True):  # the table model
 
 
 class RemoteWorkflowCreate(RemoteWorkflowBase):
-    topics: Optional[Set["RemoteWorkflowTopic"]]
-    releases: Optional[List["Release"]]
-    pipeline: Optional[List["PipelineSummary"]]
+    topics: Optional[Union[List,None]]
+    releases: Optional[Union[List,None]]
+    pipeline: Optional[Union[List,None]]
 
 
 #### Release - Models
@@ -204,7 +205,7 @@ class RemoteWorkflowTopic(RemoteWorkflowTopicBase, table=True):
         orm_mode = True
 
 
-class RemoteWorkflowTopicCreate(SQLModel):
+class RemoteWorkflowTopicCreate(RemoteWorkflowTopicBase):
 
     pass
 
@@ -256,5 +257,6 @@ class PipelineSummaryCreate(PipelineSummaryBase):
 # Update the forward refs to make the Relationships work in main.py with .from_orm()
 
 RemoteWorkflow.update_forward_refs()
+RemoteWorkflowCreate.update_forward_refs()
 RemoteWorkflowTopic.update_forward_refs()
 PipelineSummary.update_forward_refs()

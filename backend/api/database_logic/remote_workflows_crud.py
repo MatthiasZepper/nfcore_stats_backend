@@ -15,8 +15,13 @@ class RemoteWorkflowCRUD:
     def __init__(self, session: Session):
         self.session = session
 
-    def create(self, data: RemoteWorkflowBase) -> RemoteWorkflow: 
-        remote_workflow = RemoteWorkflow(**data)
+    def create(self, data: RemoteWorkflowCreate) -> RemoteWorkflow:
+        # Weird issue: When building the function like PipelinesCRUD.create, I got the error:
+        # *** AttributeError: 'dict' object has no attribute '_sa_instance_state'
+        # After a lot of failed attempts, I figured out by trial and error, that running it again through RemoteWorkflowCreate in combination with .from_orm()
+        # worked. Sadly poorly documented in https://sqlmodel.tiangolo.com/tutorial/fastapi/multiple-models/#use-multiple-models-to-create-a-hero
+        rmc = RemoteWorkflowCreate(**data) 
+        remote_workflow = RemoteWorkflow.from_orm(rmc)
         self.session.add(remote_workflow)
         self.session.commit()
         self.session.refresh(remote_workflow)
