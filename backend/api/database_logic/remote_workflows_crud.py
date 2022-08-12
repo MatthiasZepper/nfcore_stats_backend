@@ -1,15 +1,13 @@
 from fastapi import HTTPException
 from fastapi import status as http_status
-from pydantic import AnyUrl
 from sqlmodel import delete, select, Session
-from typing import Union
 
 from ..models.pipelines import RemoteWorkflow, RemoteWorkflowBase, RemoteWorkflowCreate
 
 
 class RemoteWorkflowCRUD:
     """
-    The RemoteWorkflow model holds a list of workflows on Github, each having tags and releases.
+    The RemoteWorkflow model holds a list of workflows on Github, each having topics and releases.
     """
 
     def __init__(self, session: Session):
@@ -22,8 +20,8 @@ class RemoteWorkflowCRUD:
         After a lot of failed attempts, I figured out by trial and error, that running it again through RemoteWorkflowCreate in combination with .from_orm()
         worked. Sadly poorly documented in https://sqlmodel.tiangolo.com/tutorial/fastapi/multiple-models/#use-multiple-models-to-create-a-hero
         """
-        rmc = RemoteWorkflowCreate(**data) 
-        remote_workflow = RemoteWorkflow.from_orm(rmc)
+        rwc = RemoteWorkflowCreate(**data) 
+        remote_workflow = RemoteWorkflow.from_orm(rwc)
         self.session.add(remote_workflow)
         self.session.commit()
         self.session.refresh(remote_workflow)
@@ -57,8 +55,8 @@ class RemoteWorkflowCRUD:
         Function to check if a RemoteWorkflow already exists in database. (Without knowing the ID)
         """
 
-        rmc = RemoteWorkflowCreate(**query) 
-        query = RemoteWorkflow.from_orm(rmc)
+        rwc = RemoteWorkflowCreate(**query) 
+        query = RemoteWorkflow.from_orm(rwc)
 
         if hasattr(query,"git_url"): #gitURL is probably safer than name to check for duplicates
 
@@ -66,7 +64,7 @@ class RemoteWorkflowCRUD:
 
         elif hasattr(query,"name"):
 
-            statement = select(RemoteWorkflow).where(RemoteWorkflow.name == query)
+            statement = select(RemoteWorkflow).where(RemoteWorkflow.name == query.name)
         
         else:
             return None  #no possibility to check for duplication.

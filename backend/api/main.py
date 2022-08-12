@@ -8,13 +8,11 @@ from sqlmodel import select, SQLModel, Session
 
 from .database_logic.db import engine, get_session
 from .database_logic.pipelines_crud import PipelinesCRUD
+from .database_logic.releases_crud import ReleaseCRUD
 from .database_logic.remote_workflows_crud import RemoteWorkflowCRUD
+from .database_logic.topics_crud import RemoteWorkflowTopicCRUD
 from .models.pipelines import (
-    PipelineSummaryCreate,
-    PipelineSummary,
-    PipelineSummaryBase,
-    RemoteWorkflowCreate,
-    RemoteWorkflowTopicCreate,
+    PipelineSummaryCreate
 )
 from .models.uptime import UptimeRecord, UptimeResponse
 from .settings import settings
@@ -101,39 +99,64 @@ async def ingest_pipeline_info(
 
     # initiate database operation -> easy transition to async CRUD later if needed.
     # SQLModel's versions of select and delete might be async by default...hhm.
-    crud = PipelinesCRUD(session=session)
+    p_crud = PipelinesCRUD(session=session)
 
     # check if pipeline_summary has already been imported
     # since its ID is unknown, match the value of updated
-    pipeline_summary = crud.exists(query=input_data, raise_exc=False)
+    pipeline_summary = p_crud.exists(query=input_data, raise_exc=False)
 
     if not pipeline_summary:
-        pipeline_summary = crud.create(data=input_data)
+        pipeline_summary = p_crud.create(data=input_data)
     else:
-        pipeline_summary = crud.patch(
+        pipeline_summary = p_crud.patch(
             pipeline_summary_id=pipeline_summary.id, data=input_data
         )
 
     # create and link the remote workflows.
-    crud = RemoteWorkflowCRUD(session=session)
+    rw_crud = RemoteWorkflowCRUD(session=session)
 
     for input_workflow in input_data.remote_workflows:
         
-        remote_workflow = crud.exists(query=input_workflow, raise_exc=False)
+        remote_workflow = rw_crud.exists(query=input_workflow, raise_exc=False)
         
         if not remote_workflow:
-            remote_workflow = crud.create(data=input_workflow)
+            remote_workflow = rw_crud.create(data=input_workflow)
         else:
-            remote_workflow = crud.patch(
+            remote_workflow = rw_crud.patch(
                 remote_workflow_id=remote_workflow.id, data=input_workflow
             )
+
+        # create and link the releases.
+        r_crud = ReleaseCRUD(session=session)
+
+        for input_release in input_workflow["releases"]:
         
-        for release in input_workflow.releases:
-            print(release)
+            release = r_crud.exists(query=input_release, raise_exc=False)
 
-        for topic in input_workflow.topics:
-            pass
+            #link release to it's remote workflow
+            input_release['remote_workflow_id'] = remote_workflow.id
 
-        import pdb; pdb.set_trace()
+            if not release:
+                release = r_crud.create(data=input_release)
+            else:
+                release = r_crud.patch(
+                    workflow_release_sha=release.tag_sha, data=input_release
+                )
+
+        # create and link the topics.
+        t_crud = RemoteWorkflowTopicCRUD(session=session)
+
+        for input_topic in input_workflow["topics"]:
+            
+            topic = t_crud.exists(query=input_topic, raise_exc=False)
+
+            if not topic:
+                topic = t_crud.create(data=input_topic)
+            else:
+                topic = t_crud.patch(
+                    topic_id=topic.id, data=input_topic
+                )
+
+    import pdb; pdb.set_trace()
 
     return {"OK"}

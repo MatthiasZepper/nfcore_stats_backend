@@ -157,9 +157,8 @@ class ReleaseBase(SQLModel):
     zipball_url: HttpUrl = Field(
         ..., description="Where to download the .zip archive of the release."
     )
+    remote_workflow_id: Optional[int]
 
-    # One to many relationship: One remote workflow can have many releases, but each release is linked to one workflow only.
-    remote_workflow_id: int = Field(default=None, foreign_key="remoteworkflow.id")
 
     @validator("html_url", "tarball_url", "zipball_url", pre=True)
     def replace_backslashes(cls, v):
@@ -173,7 +172,14 @@ class ReleaseBase(SQLModel):
 
 
 class Release(ReleaseBase, table=True):
+    # One to many relationship: One remote workflow can have many releases, but each release is linked to one workflow only.
+    remote_workflow_id: int = Field(default=None, foreign_key="remoteworkflow.id")
     remote_workflow: RemoteWorkflow = Relationship(back_populates="releases")
+
+
+class ReleaseCreate(ReleaseBase):
+
+    pass
 
 
 #### RemoteWorkflow Topics - aka Tags - Models
