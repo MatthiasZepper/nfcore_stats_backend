@@ -16,10 +16,12 @@ class RemoteWorkflowCRUD:
         self.session = session
 
     def create(self, data: RemoteWorkflowCreate) -> RemoteWorkflow:
-        # Weird issue: When building the function like PipelinesCRUD.create, I got the error:
-        # *** AttributeError: 'dict' object has no attribute '_sa_instance_state'
-        # After a lot of failed attempts, I figured out by trial and error, that running it again through RemoteWorkflowCreate in combination with .from_orm()
-        # worked. Sadly poorly documented in https://sqlmodel.tiangolo.com/tutorial/fastapi/multiple-models/#use-multiple-models-to-create-a-hero
+        """
+        Weird issue: When building the function like PipelinesCRUD.create, I got the error:
+        *** AttributeError: 'dict' object has no attribute '_sa_instance_state'
+        After a lot of failed attempts, I figured out by trial and error, that running it again through RemoteWorkflowCreate in combination with .from_orm()
+        worked. Sadly poorly documented in https://sqlmodel.tiangolo.com/tutorial/fastapi/multiple-models/#use-multiple-models-to-create-a-hero
+        """
         rmc = RemoteWorkflowCreate(**data) 
         remote_workflow = RemoteWorkflow.from_orm(rmc)
         self.session.add(remote_workflow)
@@ -29,6 +31,9 @@ class RemoteWorkflowCRUD:
         return remote_workflow
 
     def get(self, remote_workflow_id: int, raise_exc: bool = True) -> RemoteWorkflow:
+        """
+        Function to select a RemoteWorkflow by it's ID.
+        """
 
         statement = select(RemoteWorkflow).where(
             RemoteWorkflow.id == remote_workflow_id
@@ -46,8 +51,14 @@ class RemoteWorkflowCRUD:
         return remote_workflow
 
     def exists(
-        self, query: RemoteWorkflowBase, raise_exc: bool = True
+        self, query: RemoteWorkflowCreate, raise_exc: bool = True
     ) -> RemoteWorkflow:
+        """
+        Function to check if a RemoteWorkflow already exists in database. (Without knowing the ID)
+        """
+
+        rmc = RemoteWorkflowCreate(**query) 
+        query = RemoteWorkflow.from_orm(rmc)
 
         if hasattr(query,"git_url"): #gitURL is probably safer than name to check for duplicates
 
@@ -73,13 +84,15 @@ class RemoteWorkflowCRUD:
         return remote_workflow
 
     def patch(
-        self, remote_workflow_id: int, data: RemoteWorkflowCreate
+        self, remote_workflow_id: int, data: RemoteWorkflowBase
     ) -> RemoteWorkflow:
 
         remote_workflow = self.get(
             remote_workflow_id=remote_workflow_id, raise_exc=True
         )
-        values = data.dict(exclude_unset=True)
+
+        # filter the nested levels (releases and tags), otherwise patching fails.
+        values = RemoteWorkflowBase(**data).dict()
 
         for k, v in values.items():
             if hasattr(remote_workflow, k):

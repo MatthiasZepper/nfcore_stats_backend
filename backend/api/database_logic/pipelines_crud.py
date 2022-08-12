@@ -80,7 +80,11 @@ class PipelinesCRUD:
         pipeline_summary = self.get(
             pipeline_summary_id=pipeline_summary_id, raise_exc=True
         )
-        values = data.dict(exclude_unset=True)
+        
+        if isinstance(data, dict):
+            values = data
+        else:
+            values = data.dict()
 
         for k, v in values.items():
             if hasattr(pipeline_summary, k):

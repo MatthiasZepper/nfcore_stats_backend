@@ -119,14 +119,21 @@ async def ingest_pipeline_info(
 
     for input_workflow in input_data.remote_workflows:
         
-
         remote_workflow = crud.exists(query=input_workflow, raise_exc=False)
-        import pdb; pdb.set_trace()
+        
         if not remote_workflow:
             remote_workflow = crud.create(data=input_workflow)
         else:
             remote_workflow = crud.patch(
                 remote_workflow_id=remote_workflow.id, data=input_workflow
             )
+        
+        for release in input_workflow.releases:
+            print(release)
+
+        for topic in input_workflow.topics:
+            pass
+
+        import pdb; pdb.set_trace()
 
     return {"OK"}
