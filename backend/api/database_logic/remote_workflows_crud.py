@@ -20,7 +20,8 @@ class RemoteWorkflowCRUD:
         After a lot of failed attempts, I figured out by trial and error, that running it again through RemoteWorkflowCreate in combination with .from_orm()
         worked. Sadly poorly documented in https://sqlmodel.tiangolo.com/tutorial/fastapi/multiple-models/#use-multiple-models-to-create-a-hero
         """
-        rwc = RemoteWorkflowCreate(**data) 
+
+        rwc = RemoteWorkflowCreate(**data)
         remote_workflow = RemoteWorkflow.from_orm(rwc)
         self.session.add(remote_workflow)
         self.session.commit()
@@ -54,20 +55,24 @@ class RemoteWorkflowCRUD:
         """
         Function to check if a RemoteWorkflow already exists in database. (Without knowing the ID)
         """
-
-        rwc = RemoteWorkflowCreate(**query) 
+        print(query)
+        rwc = RemoteWorkflowCreate(**query)
         query = RemoteWorkflow.from_orm(rwc)
 
-        if hasattr(query,"git_url"): #gitURL is probably safer than name to check for duplicates
+        if hasattr(
+            query, "git_url"
+        ):  # gitURL is probably safer than name to check for duplicates
 
-            statement = select(RemoteWorkflow).where(RemoteWorkflow.git_url == query.git_url)
+            statement = select(RemoteWorkflow).where(
+                RemoteWorkflow.git_url == query.git_url
+            )
 
-        elif hasattr(query,"name"):
+        elif hasattr(query, "name"):
 
             statement = select(RemoteWorkflow).where(RemoteWorkflow.name == query.name)
-        
+
         else:
-            return None  #no possibility to check for duplication.
+            return None  # no possibility to check for duplication.
 
         results = self.session.execute(statement=statement)
         remote_workflow = results.scalar_one_or_none()
@@ -90,7 +95,7 @@ class RemoteWorkflowCRUD:
         )
 
         # filter the nested levels (releases and tags), otherwise patching fails.
-        values = RemoteWorkflowBase(**data).dict()
+        values = RemoteWorkflowBase(**data).dict(exclude_unset=True, exclude_none=True)
 
         for k, v in values.items():
             if hasattr(remote_workflow, k):

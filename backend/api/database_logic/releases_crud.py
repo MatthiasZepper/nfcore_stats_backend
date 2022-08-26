@@ -15,7 +15,7 @@ class ReleaseCRUD:
         self.session = session
 
     def create(self, data: ReleaseCreate) -> Release:
-        rc = ReleaseCreate(**data) 
+        rc = ReleaseCreate(**data)
         workflow_release = Release.from_orm(rc)
         self.session.add(workflow_release)
         self.session.commit()
@@ -28,9 +28,7 @@ class ReleaseCRUD:
         Function to select a Release by it's ID - the sha
         """
 
-        statement = select(Release).where(
-            Release.tag_sha == workflow_release_sha
-        )
+        statement = select(Release).where(Release.tag_sha == workflow_release_sha)
         results = self.session.execute(statement=statement)
         workflow_release = results.scalar_one_or_none()
 
@@ -43,27 +41,27 @@ class ReleaseCRUD:
 
         return workflow_release
 
-    def exists(
-        self, query: ReleaseCreate, raise_exc: bool = True
-    ) -> Release:
+    def exists(self, query: ReleaseCreate, raise_exc: bool = True) -> Release:
         """
         Function to check if a Release already exists in database.
         (Actually not relevant, since database uses sha as key, so it is always known)
         """
 
-        rc = ReleaseCreate(**query) 
+        rc = ReleaseCreate(**query)
         query = Release.from_orm(rc)
 
-        if hasattr(query,"tag_sha"): # use tag_sha as prime method of checking identity.
+        if hasattr(
+            query, "tag_sha"
+        ):  # use tag_sha as prime method of checking identity.
 
             statement = select(Release).where(Release.tag_sha == query.tag_sha)
 
-        elif hasattr(query,"tag_name"):
+        elif hasattr(query, "tag_name"):
 
             statement = select(Release).where(Release.tag_name == query.tag_name)
-        
+
         else:
-            return None  #no possibility to check for duplication.
+            return None  # no possibility to check for duplication.
 
         results = self.session.execute(statement=statement)
         workflow_release = results.scalar_one_or_none()
@@ -77,9 +75,7 @@ class ReleaseCRUD:
 
         return workflow_release
 
-    def patch(
-        self, workflow_release_sha: str, data: ReleaseBase
-    ) -> Release:
+    def patch(self, workflow_release_sha: str, data: ReleaseBase) -> Release:
 
         workflow_release = self.get(
             workflow_release_sha=workflow_release_sha, raise_exc=True
@@ -100,9 +96,7 @@ class ReleaseCRUD:
 
     def delete(self, workflow_release_sha: str) -> bool:
 
-        statement = delete(Release).where(
-            Release.tag_sha == workflow_release_sha
-        )
+        statement = delete(Release).where(Release.tag_sha == workflow_release_sha)
 
         self.session.execute(statement=statement)
         self.session.commit()

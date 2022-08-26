@@ -4,6 +4,22 @@ The new _nf-core stats backend_ provides simple-to-use REST and GraphQL web serv
 
 ## Development
 
+### Roadmap
+
+- [x] Scaffold initial project and repo structure: Poetry setup and Docker compose file with containers for the services.
+- [x] Decide on the tech stack to use: FastAPI, SQLModel, Pydantic, Celery, PostgreSQL and Redis.
+- [x] Write a first simple, scheduled task: Uptime checker for nf-co.re
+- [x] Write a first API to retrieve the uptime status of nf-co.re
+- [] Derive data models and suitable database table structure (Work in progress: 1/4 done)
+- [] Write CRUD logic for the various data types and sources (Work in progress: 1/4 done).
+- [] Include api.routers and split endpoints to subfiles.
+- [] Write scheduled tasks to interact with Github API, Twitter API and Slack API to gather stats and other information.
+- [] Ingest output of the schedulers into the database.
+- [] Write REST APIs to retrieve the data.
+- [] Write GraphQL APIs to retrieve the data.
+- [] Add authentication to the endpoints.
+- [] Write documentation.
+
 ### Debugging
 
 To enable debugging code, the container _nfcore_stats_api_ has set `stdin_open` and `tty` true, such that one can attach a terminal to the container. This is most useful in conjunction with `set_trace()`. Put

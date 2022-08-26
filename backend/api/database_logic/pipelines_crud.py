@@ -24,7 +24,7 @@ class PipelinesCRUD:
             values = data
         else:
             values = data.dict()
-            
+
         pipeline_summary = PipelineSummary(**values)
         self.session.add(pipeline_summary)
         self.session.commit()
@@ -51,16 +51,21 @@ class PipelinesCRUD:
 
         return pipeline_summary
 
-    def exists(self, query: PipelineSummaryBase, raise_exc: bool = True) -> PipelineSummary:
+    def exists(
+        self, query: PipelineSummaryBase, raise_exc: bool = True
+    ) -> PipelineSummary:
 
-        if hasattr(query,"updated"): #gitURL is probably safer than name to check for duplicates
+        if hasattr(
+            query, "updated"
+        ):  # gitURL is probably safer than name to check for duplicates
 
-            statement = select(PipelineSummary).where(PipelineSummary.updated == query.updated)
+            statement = select(PipelineSummary).where(
+                PipelineSummary.updated == query.updated
+            )
 
         else:
-            return None  #no possibility to check for duplication.
+            return None  # no possibility to check for duplication.
 
-        
         results = self.session.execute(statement=statement)
         pipeline_summary = results.scalar_one_or_none()
 
@@ -80,7 +85,7 @@ class PipelinesCRUD:
         pipeline_summary = self.get(
             pipeline_summary_id=pipeline_summary_id, raise_exc=True
         )
-        
+
         if isinstance(data, dict):
             values = data
         else:

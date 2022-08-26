@@ -1,3 +1,4 @@
+import re
 import uuid
 from datetime import datetime
 
@@ -53,8 +54,7 @@ class RemoteWorkflowBase(SQLModel):
     The RemoteWorkflow model is the main model representing the information for each pipeline.
     """
 
-    id: int = Field(..., description="The ID of the remote workflow."
-    )
+    id: int = Field(..., description="The ID of the remote workflow.")
     name: str = Field(..., description="The base name of the pipeline/repo.")
     full_name: str = Field(
         ..., description="The full name of the pipeline/repo including nf-core."
@@ -63,9 +63,7 @@ class RemoteWorkflowBase(SQLModel):
         ..., description="Is the repository private or publicly visible?"
     )
     html_url: HttpUrl = Field(..., description="The URL of the repository on Github.")
-    description: Optional[str] = Field(
-        ..., description=" The description of the repository."
-    )
+    description: str = Field(..., description=" The description of the repository.")
 
     created_at: datetime = Field(
         ..., description="The time point when the workflow was created."
@@ -98,6 +96,13 @@ class RemoteWorkflowBase(SQLModel):
         """
         return v.replace("\\", "")
 
+    @validator("description", pre=True)
+    def replace_none(cls, v):
+        """
+        The description can sometimes be null, which caused a variety of downstream problems, therefore replace with empty string.
+        """
+        return re.sub("^null$", "", v) if v else ""
+
 
 class RemoteWorkflow(RemoteWorkflowBase, table=True):  # the table model
 
@@ -118,9 +123,9 @@ class RemoteWorkflow(RemoteWorkflowBase, table=True):  # the table model
 
 
 class RemoteWorkflowCreate(RemoteWorkflowBase):
-    topics: Optional[Union[List,None]]
-    releases: Optional[Union[List,None]]
-    pipeline: Optional[Union[List,None]]
+    topics: Optional[Union[List, None]]
+    releases: Optional[Union[List, None]]
+    pipeline: Optional[Union[List, None]]
 
 
 #### Release - Models
@@ -158,7 +163,6 @@ class ReleaseBase(SQLModel):
         ..., description="Where to download the .zip archive of the release."
     )
     remote_workflow_id: Optional[int]
-
 
     @validator("html_url", "tarball_url", "zipball_url", pre=True)
     def replace_backslashes(cls, v):

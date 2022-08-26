@@ -71,7 +71,10 @@ services:
       context: .
       dockerfile: ./dockerfiles/DockerfilePython
     depends_on:
-      - nfcore_stats_redis
+      nfcore_stats_db:
+        condition: service_healthy
+      nfcore_stats_redis:
+        condition: service_started
     networks:
       - nfcore_stats
     volumes:

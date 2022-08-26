@@ -2,7 +2,11 @@ from fastapi import HTTPException
 from fastapi import status as http_status
 from sqlmodel import delete, select, Session
 
-from ..models.pipelines import RemoteWorkflowTopic, RemoteWorkflowTopicBase, RemoteWorkflowTopicCreate
+from ..models.pipelines import (
+    RemoteWorkflowTopic,
+    RemoteWorkflowTopicBase,
+    RemoteWorkflowTopicCreate,
+)
 
 
 class RemoteWorkflowTopicCRUD:
@@ -17,8 +21,8 @@ class RemoteWorkflowTopicCRUD:
 
         if isinstance(data, dict):
             topic = RemoteWorkflowTopic.parse_obj(data)
-        else: #likely str then
-            topic = RemoteWorkflowTopic.parse_obj({"topic" : data})
+        else:  # likely str then
+            topic = RemoteWorkflowTopic.parse_obj({"topic": data})
 
         self.session.add(topic)
         self.session.commit()
@@ -53,8 +57,10 @@ class RemoteWorkflowTopicCRUD:
         Function to check if a RemoteWorkflowTopic already exists in database. (Without knowing the ID)
         """
 
-        # .ilike() is a SQLAlchemy way of caseinsensitive comparison. 
-        statement = select(RemoteWorkflowTopic).where(RemoteWorkflowTopic.topic.ilike(query))
+        # .ilike() is a SQLAlchemy way of caseinsensitive comparison.
+        statement = select(RemoteWorkflowTopic).where(
+            RemoteWorkflowTopic.topic.ilike(query)
+        )
         results = self.session.execute(statement=statement)
         topic = results.scalar_one_or_none()
 
@@ -71,14 +77,12 @@ class RemoteWorkflowTopicCRUD:
         self, topic_id: int, data: RemoteWorkflowTopicBase
     ) -> RemoteWorkflowTopic:
 
-        topic = self.get(
-            topic_id=topic_id, raise_exc=True
-        )
+        topic = self.get(topic_id=topic_id, raise_exc=True)
 
         if isinstance(data, dict):
             values = RemoteWorkflowTopicBase(**data).dict()
-        else: #likely str then
-            values = {"topic" : data}
+        else:  # likely str then
+            values = {"topic": data}
 
         for k, v in values.items():
             if hasattr(topic, k):

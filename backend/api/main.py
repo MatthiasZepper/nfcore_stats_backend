@@ -11,9 +11,7 @@ from .database_logic.pipelines_crud import PipelinesCRUD
 from .database_logic.releases_crud import ReleaseCRUD
 from .database_logic.remote_workflows_crud import RemoteWorkflowCRUD
 from .database_logic.topics_crud import RemoteWorkflowTopicCRUD
-from .models.pipelines import (
-    PipelineSummaryCreate
-)
+from .models.pipelines import PipelineSummaryCreate
 from .models.uptime import UptimeRecord, UptimeResponse
 from .settings import settings
 
@@ -116,9 +114,9 @@ async def ingest_pipeline_info(
     rw_crud = RemoteWorkflowCRUD(session=session)
 
     for input_workflow in input_data.remote_workflows:
-        
+
         remote_workflow = rw_crud.exists(query=input_workflow, raise_exc=False)
-        
+
         if not remote_workflow:
             remote_workflow = rw_crud.create(data=input_workflow)
         else:
@@ -130,11 +128,11 @@ async def ingest_pipeline_info(
         r_crud = ReleaseCRUD(session=session)
 
         for input_release in input_workflow["releases"]:
-        
+
             release = r_crud.exists(query=input_release, raise_exc=False)
 
-            #link release to it's remote workflow
-            input_release['remote_workflow_id'] = remote_workflow.id
+            # link release to it's remote workflow
+            input_release["remote_workflow_id"] = remote_workflow.id
 
             if not release:
                 release = r_crud.create(data=input_release)
@@ -147,16 +145,12 @@ async def ingest_pipeline_info(
         t_crud = RemoteWorkflowTopicCRUD(session=session)
 
         for input_topic in input_workflow["topics"]:
-            
+
             topic = t_crud.exists(query=input_topic, raise_exc=False)
 
             if not topic:
                 topic = t_crud.create(data=input_topic)
             else:
-                topic = t_crud.patch(
-                    topic_id=topic.id, data=input_topic
-                )
-
-    import pdb; pdb.set_trace()
+                topic = t_crud.patch(topic_id=topic.id, data=input_topic)
 
     return {"OK"}
