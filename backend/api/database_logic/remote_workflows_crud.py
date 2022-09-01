@@ -55,7 +55,7 @@ class RemoteWorkflowCRUD:
         """
         Function to check if a RemoteWorkflow already exists in database. (Without knowing the ID)
         """
-        print(query)
+
         rwc = RemoteWorkflowCreate(**query)
         query = RemoteWorkflow.from_orm(rwc)
 

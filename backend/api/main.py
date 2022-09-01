@@ -132,7 +132,9 @@ async def ingest_pipeline_info(
             release = r_crud.exists(query=input_release, raise_exc=False)
 
             # link release to it's remote workflow
-            input_release["remote_workflow_id"] = remote_workflow.id
+            remote_workflow = rw_crud.exists(query=input_workflow, raise_exc=False)
+            if remote_workflow and hasattr(remote_workflow, "id"):
+                input_release["remote_workflow_id"] = remote_workflow.id
 
             if not release:
                 release = r_crud.create(data=input_release)
@@ -152,5 +154,36 @@ async def ingest_pipeline_info(
                 topic = t_crud.create(data=input_topic)
             else:
                 topic = t_crud.patch(topic_id=topic.id, data=input_topic)
+
+            # async, therefore a session.refresh is necessary.
+            # Nonetheless I get seemingly random
+            # sqlalchemy.orm.exc.UnmappedInstanceError: Class 'builtins.NoneType' is not mapped
+            # errors for some records, therefore these weird nested if clauses.
+
+            # session.refresh() didn't help...switching to exists function.
+
+            remote_workflow = rw_crud.exists(query=input_workflow, raise_exc=False)
+            topic = t_crud.exists(query=input_topic, raise_exc=False)
+
+            if remote_workflow and topic:
+                remote_workflow.topics = [topic]
+                session.add(remote_workflow)
+                session.commit()
+
+    # async, therefore a session.refresh is necessary.
+    # Nonetheless I get seemingly random
+    # sqlalchemy.orm.exc.UnmappedInstanceError: Class 'builtins.NoneType' is not mapped
+    # errors for some records, therefore these weird nested if clauses.
+
+    for input_workflow in input_data.remote_workflows:
+
+        pipeline_summary = p_crud.exists(query=input_data, raise_exc=False)
+        remote_workflow = rw_crud.exists(query=input_workflow, raise_exc=False)
+
+        if pipeline_summary and remote_workflow:
+            pipeline_summary.remote_workflow.append(remote_workflow)
+
+        session.add(pipeline_summary)
+        session.commit()
 
     return {"OK"}
