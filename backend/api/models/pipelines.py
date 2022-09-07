@@ -228,11 +228,10 @@ class PipelineSummaryBase(SQLModel):
     The PipelineSummary model is the top-level model that enriches a list of RemoteWorkflows with some metadata.
     """
 
-    received: Optional[datetime] = Field(
+    updated: datetime = Field(
         default_factory=datetime.utcnow,
         description="Timestamp when the JSON information was received.",
     )
-    updated: int = Field(..., description="The update count of the JSON.")
     pipeline_count: int = Field(..., description="The number of pipelines in nf-core.")
     published_count: int = Field(
         ..., description="The number of published pipelines in nf-core."
