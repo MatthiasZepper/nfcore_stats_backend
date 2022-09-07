@@ -8,17 +8,20 @@ The new _nf-core stats backend_ provides simple-to-use REST and GraphQL web serv
 
 - [x] Scaffold initial project and repo structure: Poetry setup and Docker compose file with containers for the services.
 - [x] Decide on the tech stack to use: FastAPI, SQLModel, Pydantic, Celery, PostgreSQL and Redis.
-- [x] Write a first simple, scheduled task: Uptime checker for nf-co.re
-- [x] Write a first API to retrieve the uptime status of nf-co.re
-- [] Derive data models and suitable database table structure (Work in progress: 1/4 done)
-- [] Write CRUD logic for the various data types and sources (Work in progress: 1/4 done).
-- [] Include api.routers and split endpoints to subfiles.
-- [] Write scheduled tasks to interact with Github API, Twitter API and Slack API to gather stats and other information.
-- [] Ingest output of the schedulers into the database.
-- [] Write REST APIs to retrieve the data.
-- [] Write GraphQL APIs to retrieve the data.
-- [] Add authentication to the endpoints.
-- [] Write documentation.
+- [x] Write a first simple, scheduled task as demo: Uptime checker for nf-co.re
+- [x] Write a first API to retrieve the uptime status of nf-co.re as demo.
+- [x] _Derive data models and suitable database table structure (Work in progress: 1/4 done)_
+- [x] _Write CRUD logic for the various data types and sources (Work in progress: 1/4 done)_
+- [x] Include api.routers and split endpoints to subfiles.
+- [ ] Write scheduled tasks to interact with Github API, Twitter API and Slack API to gather stats and other information.
+- [ ] Ingest output of the schedulers into the database.
+- [ ] Write REST APIs to retrieve the data.
+- [ ] Write GraphQL APIs to retrieve the data.
+- [ ] Add authentication to the endpoints.
+- [ ] Write documentation.
+- [ ] Include convenience functions, e.g. the ability to add new domains or accounts to monitor via API calls.
+- [ ] Write tests.
+- [ ] Integrate and configure alembic for database migrations?
 
 ### Debugging
 
@@ -43,7 +46,7 @@ to the database, navigate into the folder containing the existing json files and
 
 ```bash
 cd /path/to/your/json/files
-curl --data-binary "@pipelines.json" -H "Content-Type: application/json" -X PUT http://localhost:8000/json/pipelines
+curl --data-binary "@pipelines.json" -H "Content-Type: application/json" -X PUT http://localhost:8000/import/pipelines
 ```
 
 Mind the `@` symbol preceding the file name. You can also specify `--data-binary "@/path/to/your/json/files/pipelines.json"` if you are dispatching the request from outside the folder.
