@@ -7,6 +7,7 @@ from ..database_logic.pipelines_crud import PipelinesCRUD
 from ..database_logic.releases_crud import ReleaseCRUD
 from ..database_logic.remote_workflows_crud import RemoteWorkflowCRUD
 from ..database_logic.topics_crud import RemoteWorkflowTopicCRUD
+from ..models.issues import IssueStatsAggregateCreate
 from ..models.pipelines import PipelineSummaryCreate
 
 router = APIRouter(
@@ -21,6 +22,9 @@ router = APIRouter(
 async def ingest_pipeline_info(
     *, input_data: PipelineSummaryCreate, session: Session = Depends(get_session)
 ):
+    """
+    Import function for pipelines.json
+    """
 
     # initiate database operation -> easy transition to async CRUD later if needed.
     # SQLModel's versions of select and delete might be async by default...hhm.
@@ -113,4 +117,16 @@ async def ingest_pipeline_info(
         session.add(pipeline_summary)
         session.commit()
 
-    return {"OK"}
+    return {"Import of pipelines.json successful"}
+
+
+@router.put("/issue_stats")
+async def ingest_issue_stats_info(
+    *, input_data: IssueStatsAggregateCreate, session: Session = Depends(get_session)
+):
+    """
+    Import function for nfcore_issue_stats.json
+    """
+    import pdb; pdb.set_trace()
+    return {"Import of nfcore_issue_stats.json successful"}
+
