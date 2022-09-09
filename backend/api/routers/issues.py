@@ -17,7 +17,7 @@
 }
 """
 
-#List of issues per repo with numeric ID
+# List of issues per repo with numeric ID
 """
 "162": {
                     "url": "https:\/\/api.github.com\/repos\/nf-core\/smrnaseq\/issues\/162",
@@ -57,5 +57,3 @@
             }
         },
 """
-
-

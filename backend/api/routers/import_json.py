@@ -127,6 +127,7 @@ async def ingest_issue_stats_info(
     """
     Import function for nfcore_issue_stats.json
     """
-    import pdb; pdb.set_trace()
-    return {"Import of nfcore_issue_stats.json successful"}
+    import pdb
 
+    pdb.set_trace()
+    return {"Import of nfcore_issue_stats.json successful"}

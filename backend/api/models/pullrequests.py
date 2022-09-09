@@ -25,19 +25,29 @@ class PullRequestStatsBase(SQLModel):
     The PullRequestStatsBase model is the main model for an statistical aggregate across all PRs in nf-core for a given time point.
     """
 
-    count: int = Field(..., description="The total count of issues across the organization.")
-    open_count: int = Field(..., description="The total count of open issues across the organization.")
-    comments_count: int = Field(..., description="The number of comments for all repos.")
+    count: int = Field(
+        ..., description="The total count of issues across the organization."
+    )
+    open_count: int = Field(
+        ..., description="The total count of open issues across the organization."
+    )
+    comments_count: int = Field(
+        ..., description="The number of comments for all repos."
+    )
     authors_count: int = Field(..., description="The headcount of authors involved.")
-    median_close_time: timedelta = Field(..., description="The median time for an issue to be open.")
-    median_response_time: timedelta = Field(..., description="The median time before someone replied to an open issue.")
+    median_close_time: timedelta = Field(
+        ..., description="The median time for an issue to be open."
+    )
+    median_response_time: timedelta = Field(
+        ..., description="The median time before someone replied to an open issue."
+    )
 
 
 class PullRequestStats(PullRequestStatsBase, table=True):
     """
     The PullRequestStats model table
     """
-    
+
     received: datetime = Field(
         default_factory=datetime.utcnow,
         description="Timestamp when the aggregation was performed.",
@@ -49,17 +59,30 @@ class PullRequestBase(SQLModel):
     """
     The IssueBase model to gather all issues from all repos.
     """
+
     url: HttpUrl = Field(..., description="URL of the issue on Github")
-    comments_url: HttpUrl = Field(..., description="API URL of the issue's comments."),
-    html_url: HttpUrl = Field(..., description="URL of the issue's comments on Github"),
+    comments_url: HttpUrl = (
+        Field(..., description="API URL of the issue's comments."),
+    )
+    html_url: HttpUrl = (
+        Field(..., description="URL of the issue's comments on Github"),
+    )
     state: str = Field(..., description="state of the issue")
-    num_comments: int = Field(..., description="How many comments are recorded for the issue"),
-    created_at: datetime = Field(..., description="Creation date of the issue"),
-    updated_at: datetime = Field(..., description="Update date of the issue"),
-    closed_at: Optional[datetime] = Field(..., description="Closing date of the issue, if exists"),
-    closed_wait: Optional[timedelta] = Field(..., description="Creation date of the issue"),
-    first_reply: datetime = Field(..., description="When did somebody reply?"),
-    first_reply_wait: timedelta = Field(..., description="How long did the issue remain unanswered?"),
+    num_comments: int = (
+        Field(..., description="How many comments are recorded for the issue"),
+    )
+    created_at: datetime = (Field(..., description="Creation date of the issue"),)
+    updated_at: datetime = (Field(..., description="Update date of the issue"),)
+    closed_at: Optional[datetime] = (
+        Field(..., description="Closing date of the issue, if exists"),
+    )
+    closed_wait: Optional[timedelta] = (
+        Field(..., description="Creation date of the issue"),
+    )
+    first_reply: datetime = (Field(..., description="When did somebody reply?"),)
+    first_reply_wait: timedelta = (
+        Field(..., description="How long did the issue remain unanswered?"),
+    )
 
     @validator("url", "comments_url", "html_url", pre=True)
     def replace_backslashes(cls, v):
@@ -68,10 +91,12 @@ class PullRequestBase(SQLModel):
         """
         return v.replace("\\", "")
 
+
 class PullRequest(PullRequestBase, table=True):
     """
     The PullRequest table model
     """
+
     __tablename__ = "pullrequests"
     id: UUID4 = Field(default_factory=uuid.uuid4, primary_key=True)
 
@@ -86,16 +111,20 @@ class PullRequest(PullRequestBase, table=True):
     # Finally solved with https://github.com/tiangolo/sqlmodel/issues/10
 
     created_by_id: UUID4 = Field(default=None, foreign_key="githubuser.id")
-    created_by: GithubUser = Relationship(sa_relationship_kwargs={"primaryjoin": "pullrequests.created_by_id==githubuser.id", "lazy": "joined"})
+    created_by: GithubUser = Relationship(
+        sa_relationship_kwargs={"foreign_keys": "[PullRequest.created_by_id]"}
+    )
 
     first_reply_by_id: UUID4 = Field(default=None, foreign_key="githubuser.id")
-    first_reply_by: GithubUser = Relationship(sa_relationship_kwargs={"primaryjoin": "pullrequests.first_reply_by_id==githubuser.id", "lazy": "joined"})
+    first_reply_by: GithubUser = Relationship(
+        sa_relationship_kwargs={"foreign_keys": "[PullRequest.first_reply_by_id]"}
+    )
 
 
 class PullRequestCreate(PullRequestBase):
     repo: Optional[str]
     running_number: Optional[int]
-    created_by: str 
+    created_by: str
     first_reply_by: str
 
 
@@ -103,11 +132,11 @@ class PullRequestsArrayCreate(SQLModel):
     """
     Weird single aggregated item within "stats" in nfcore_issue_stats.json. Only two items divert from the regular schema StatsIssuePullRequestAggregateCreate in .models.issues
     """
-    daily_opened: Dict[date,int]
-    daily_closed: Dict[date,int]
+
+    daily_opened: Dict[date, int]
+    daily_closed: Dict[date, int]
     close_times: List[int]
     response_times: List[int]
-
 
 
 PullRequest.update_forward_refs()

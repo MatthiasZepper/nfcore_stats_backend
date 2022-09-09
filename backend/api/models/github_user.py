@@ -19,13 +19,15 @@ Each model entity in this file may have several associated models declared:
 """
 
 
-
-
 class GithubUserBase(SQLModel):
 
     username: str = Field(..., description="Github user name")
-    profile_url: HttpUrl = Field(..., description="The URL to get to the user's page on Github.")
-    profile_img_url: HttpUrl = Field(..., description="The URL of the profile picture of the user.")
+    profile_url: HttpUrl = Field(
+        ..., description="The URL to get to the user's page on Github."
+    )
+    profile_img_url: HttpUrl = Field(
+        ..., description="The URL of the profile picture of the user."
+    )
 
     @validator("profile_url", "profile_img_url", pre=True)
     def replace_backslashes(cls, v):
@@ -39,24 +41,34 @@ class GithubUser(GithubUserBase, table=True):
     __tablename__ = "githubuser"
     id: UUID4 = Field(default_factory=uuid.uuid4, primary_key=True)
 
-    issues: Optional[List["Issue"]] = Relationship(back_populates="issues.created_by")
-    issue_replies: Optional[List["Issue"]] = Relationship(back_populates="issues.first_reply_by")
+    # specifying a formal Relationship with back_populates here will cause sqlalchemy.exc.AmbiguousForeignKeysError for Issue and PullRequest,
+    # because they reference GithubUser twice (for created_by and first_reply_by Relationships). If a table has only a single relationship
+    # putting Relationship(back_populates="...") works perfectly, see RemoteWorkflow and Release.
+    # Also mind that SQLModels Relationship and SQLAlchemy.ORM's relationship() have slightly different args, e.g. one needs the foreign_keys to be specified as
+    # ["foreign_key"] and the other one as "[foreign_key]".
+    # Something I learned the hard way and wasted many more hours on ORM peculiarities (How about switching to MongoDB? Anyone?).
 
-    pullrequests: Optional[List["PullRequest"]] = Relationship(back_populates="pullrequests.created_by")
-    pullrequest_replies: Optional[List["PullRequest"]] = Relationship(back_populates="pullrequests.first_reply_by")
+    # Anyway: Github Users are referenced as foreign.id at:
+    # Issue.created_by (table: issues.created_by_id)
+    # Issue.first_reply_by (table: issues.first_reply_by_id)
+    # PullRequest.created_by (table: pullrequests.created_by_id)
+    # PullRequest.first_reply_by (table: pullrequests.first_reply_by_id)
 
 
-#The create models for nfcore_issue_stats.json import
+# The create models for nfcore_issue_stats.json import
+
 
 class AuthorIssueStatsCreate(SQLModel):
     num_created: int
     num_replies: int
     num_first_response: int
 
+
 class AuthorPullRequestStatsCreate(SQLModel):
     num_created: int
     num_replies: int
     num_first_response: int
+
 
 class AuthorStatsCreate(SQLModel):
     prs: Optional[AuthorPullRequestStatsCreate]

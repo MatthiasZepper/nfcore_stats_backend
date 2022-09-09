@@ -47,6 +47,8 @@ to the database, navigate into the folder containing the existing json files and
 ```bash
 cd /path/to/your/json/files
 curl --data-binary "@pipelines.json" -H "Content-Type: application/json" -X PUT http://localhost:8000/import/pipelines
+
+curl --data-binary "@nfcore_issue_stats.json" -H "Content-Type: application/json" -X PUT http://localhost:8000/import/pipelines
 ```
 
 Mind the `@` symbol preceding the file name. You can also specify `--data-binary "@/path/to/your/json/files/pipelines.json"` if you are dispatching the request from outside the folder.
