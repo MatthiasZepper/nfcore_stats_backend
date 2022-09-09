@@ -72,25 +72,31 @@ class PullRequest(PullRequestBase, table=True):
     """
     The PullRequest table model
     """
-
+    __tablename__ = "pullrequests"
     id: UUID4 = Field(default_factory=uuid.uuid4, primary_key=True)
 
     repo: str = Field(..., description="The repo the PR is associated with")
     running_number: int = Field(..., description="The running number of the PR.")
 
     # One to many relationship: One user can have created many issues and PRs, but each is linked to one GithubUser only.
-    pullrequest_created_by_id: UUID4 = Field(default=None, foreign_key="pullrequest_created_by.id")
-    pullrequest_created_by: GithubUser = Relationship(back_populates="pullrequests")
+    # Unfortunately, we need to link GithubUsers twice (the creator and the first reply)
+    # In regular SQLAlchemy that would be easily solved with relationship(foreign_keys="...")
+    # (https://docs.sqlalchemy.org/en/14/orm/join_conditions.html#handling-multiple-join-paths)
+    # SQLModel Relationship however doesn't support this respectively fails to create connections when sa_relationship_kwargs are used with foreign_keyes.
+    # Finally solved with https://github.com/tiangolo/sqlmodel/issues/10
 
-    pullrequest_first_reply_by_id: UUID4 = Field(default=None, foreign_key="pullrequest_first_reply_by.id")
-    pullrequest_first_reply_by: GithubUser = Relationship(back_populates="pullrequest_replies")
+    created_by_id: UUID4 = Field(default=None, foreign_key="githubuser.id")
+    created_by: GithubUser = Relationship(sa_relationship_kwargs={"primaryjoin": "pullrequests.created_by_id==githubuser.id", "lazy": "joined"})
+
+    first_reply_by_id: UUID4 = Field(default=None, foreign_key="githubuser.id")
+    first_reply_by: GithubUser = Relationship(sa_relationship_kwargs={"primaryjoin": "pullrequests.first_reply_by_id==githubuser.id", "lazy": "joined"})
 
 
 class PullRequestCreate(PullRequestBase):
     repo: Optional[str]
     running_number: Optional[int]
-    created_by: str
-    first_reply_by: str 
+    created_by: str 
+    first_reply_by: str
 
 
 class PullRequestsArrayCreate(SQLModel):

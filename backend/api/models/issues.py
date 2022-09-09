@@ -81,18 +81,24 @@ class Issue(IssueBase, table=True):
     """
     The Issue table model
     """
-
+    __tablename__ = "issues"
     id: UUID4 = Field(default_factory=uuid.uuid4, primary_key=True)
 
     repo: str = Field(..., description="The repo the issue is associated with")
     running_number: int = Field(..., description="The running number of the issue.")
 
     # One to many relationship: One user can have created many issues and PRs, but each is linked to one GithubUser only.
-    issue_created_by_id: UUID4 = Field(default=None, foreign_key="issue_created_by.id")
-    issue_created_by: GithubUser = Relationship(back_populates="issues")
+    # Unfortunately, we need to link GithubUsers twice (the creator and the first reply)
+    # In regular SQLAlchemy that would be easily solved with relationship(foreign_keys="...")
+    # (https://docs.sqlalchemy.org/en/14/orm/join_conditions.html#handling-multiple-join-paths)
+    # SQLModel Relationship however doesn't support this respectively fails to create connections when sa_relationship_kwargs are used with foreign_keyes.
+    # Finally solved with https://github.com/tiangolo/sqlmodel/issues/10
 
-    issue_first_reply_by_id: UUID4 = Field(default=None, foreign_key="issue_first_reply_by.id")
-    issue_first_reply_by: GithubUser = Relationship(back_populates="issue_replies")
+    created_by_id: UUID4 = Field(default=None, foreign_key="githubuser.id")
+    created_by: GithubUser = Relationship(sa_relationship_kwargs={"primaryjoin": "issues.created_by_id==githubuser.id", "lazy": "joined"})
+
+    first_reply_by_id: UUID4 = Field(default=None, foreign_key="githubuser.id")
+    first_reply_by: GithubUser = Relationship(sa_relationship_kwargs={"primaryjoin": "issues.first_reply_by_id==githubuser.id", "lazy": "joined"})
 
 class IssueCreate(IssueBase):
     repo: Optional[str]

@@ -36,14 +36,14 @@ class GithubUserBase(SQLModel):
 
 
 class GithubUser(GithubUserBase, table=True):
-
+    __tablename__ = "githubuser"
     id: UUID4 = Field(default_factory=uuid.uuid4, primary_key=True)
 
-    issues: Optional[List["Issue"]] = Relationship(back_populates="issue_created_by")
-    issue_replies: Optional[List["Issue"]] = Relationship(back_populates="issue_first_reply_by")
+    issues: Optional[List["Issue"]] = Relationship(back_populates="issues.created_by")
+    issue_replies: Optional[List["Issue"]] = Relationship(back_populates="issues.first_reply_by")
 
-    pullrequests: Optional[List["PullRequest"]] = Relationship(back_populates="pullrequest_created_by")
-    pullrequest_replies: Optional[List["PullRequest"]] = Relationship(back_populates="pullrequest_first_reply_by")
+    pullrequests: Optional[List["PullRequest"]] = Relationship(back_populates="pullrequests.created_by")
+    pullrequest_replies: Optional[List["PullRequest"]] = Relationship(back_populates="pullrequests.first_reply_by")
 
 
 #The create models for nfcore_issue_stats.json import
